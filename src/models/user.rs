@@ -17,7 +17,7 @@ pub struct User {
     pub username: String,
     pub password: String,
     pub salt: Vec<u8>,
-    pub created_at: OffsetDateTime,
+    pub created_at: Option<OffsetDateTime>,
 }
 
 #[derive(Validate, Deserialize)]
@@ -61,7 +61,7 @@ impl CreateUser {
             "INSERT INTO users(username, password, salt) VALUES ($1, $2, $3) RETURNING *",
             self.username,
             hashed_passwd,
-            salt.to_vec(),
+            salt.to_vec()
         )
         .fetch_one(pool)
         .await
