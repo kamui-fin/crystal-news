@@ -1,0 +1,21 @@
+[package]
+name = "crystal-news"
+version = "0.1.0"
+authors = ["Kamui <qntmmagic7@gmail.com>"]
+edition = "2018"
+
+[dependencies]
+actix-web = "3"
+rand = "0.8.3"
+rust-argon2 = "0.8.3"
+dotenv = "0.15.0"
+envconfig = "0.9.1"
+jsonwebtoken = "7.2.0"
+serde_json = "1.0.64"
+serde = { version = "1.0.126", features = ["derive"] }
+sqlx = { version = "0.4", features = [ "runtime-actix-native-tls", "postgres", "time" ]}
+chrono ={ version = "0.4.19", features = ["serde"]}
+regex = "1.5.4"
+validator = { version = "0.12", features = ["derive"] }
+lazy_static = "1.4.0"
+thiserror = "1.0.25"
