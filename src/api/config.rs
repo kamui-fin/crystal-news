@@ -1,7 +1,5 @@
 use dotenv::dotenv;
-use envconfig::Envconfig;
-
-use super::error::ApiError;
+use envconfig::{Envconfig, Error};
 
 #[derive(Envconfig, Debug)]
 pub struct Config {
@@ -14,8 +12,8 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new() -> Result<Self, ApiError> {
+    pub fn new() -> Result<Self, Error> {
         dotenv().ok();
-        Config::init_from_env().map_err(|e| ApiError::ConfigError)
+        Config::init_from_env()
     }
 }

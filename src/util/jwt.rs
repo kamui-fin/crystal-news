@@ -1,7 +1,6 @@
-use chrono::prelude::*;
+use chrono::{prelude::*, Duration};
+use jsonwebtoken::{errors::Error, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
-
-use crate::api::error::ApiError;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
@@ -15,16 +14,15 @@ impl Claims {
         Claims {
             sub,
             iat: Utc::now(),
-            exp: Utc::now() + chrono::Duration::days(exp_days),
+            exp: Utc::now() + Duration::days(exp_days),
         }
     }
 
-    pub fn gen_token(&self, secret: &str) -> Result<String, crate::util::ApiError> {
+    pub fn gen_token(&self, secret: &str) -> Result<String, Error> {
         jsonwebtoken::encode(
-            &jsonwebtoken::Header::default(),
+            &Header::default(),
             self,
-            &jsonwebtoken::EncodingKey::from_secret(secret.as_bytes()),
+            &EncodingKey::from_secret(secret.as_bytes()),
         )
-        .map_err(|e| ApiError::JwtError(e))
     }
 }

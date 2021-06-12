@@ -1,6 +1,9 @@
-use crate::api::error::ApiError;
+use crate::api::error::SignUpError::{
+    DatabaseError, HashError, RequirementError, UsernameAlreadyExists,
+};
 use crate::util::validate_password;
 use argon2::Config as ArgonConfig;
+use argon2::Variant::Argon2id;
 use rand::RngCore;
 use regex::Regex;
 use serde::Deserialize;
@@ -29,7 +32,10 @@ pub struct CreateUser {
 }
 
 impl CreateUser {
-    pub async fn register(&self, pool: &Pool<sqlx::Postgres>) -> Result<User, ApiError> {
+    pub async fn register(
+        &self,
+        pool: &Pool<sqlx::Postgres>,
+    ) -> Result<User, crate::api::error::SignUpError> {
         let exist_user = sqlx::query!(
             "SELECT id FROM users WHERE username = $1 LIMIT 1",
             self.username
@@ -37,24 +43,24 @@ impl CreateUser {
         .fetch_one(pool)
         .await;
 
-        if let Err(_) = self.validate() {
-            panic!("todo");
+        if let Err(e) = self.validate() {
+            return Err(RequirementError(e));
         }
 
         if let Ok(_) = exist_user {
-            panic!("todo");
+            return Err(UsernameAlreadyExists);
         }
 
         let mut salt = [0u8; 8];
         rand::thread_rng().fill_bytes(&mut salt);
 
         let config = ArgonConfig {
-            variant: argon2::Variant::Argon2id,
+            variant: Argon2id,
             ..ArgonConfig::default()
         };
 
         let hashed_passwd = argon2::hash_encoded(self.password.as_bytes(), &salt, &config)
-            .map_err(|e| ApiError::HashError(e))?;
+            .map_err(|e| HashError(e))?;
 
         sqlx::query_as!(
             User,
@@ -65,6 +71,6 @@ impl CreateUser {
         )
         .fetch_one(pool)
         .await
-        .map_err(|e| ApiError::DbError(e))
+        .map_err(|e| DatabaseError(e))
     }
 }
