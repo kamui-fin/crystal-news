@@ -1,5 +1,5 @@
 use chrono::{prelude::*, Duration};
-use jsonwebtoken::{errors::Error, EncodingKey, Header};
+use jsonwebtoken::{EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -18,11 +18,12 @@ impl Claims {
         }
     }
 
-    pub fn gen_token(&self, secret: &str) -> Result<String, Error> {
+    pub fn gen_token(&self, secret: &str) -> String {
         jsonwebtoken::encode(
             &Header::default(),
             self,
             &EncodingKey::from_secret(secret.as_bytes()),
         )
+        .unwrap() // will not panic since we're using a constructor
     }
 }

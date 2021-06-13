@@ -1,8 +1,9 @@
-use actix_web::{dev::Body, http::StatusCode, HttpResponse};
+use actix_web::{http::StatusCode, HttpResponse};
 use argon2::Error as ArgonError;
 use sqlx::Error as SqlxError;
 use std::fmt;
-
+pub type Result<T> = std::result::Result<T, ApiError>;
+#[derive(Debug)]
 pub struct ApiError {
     code: StatusCode,
     message: Option<String>,
@@ -20,9 +21,29 @@ pub enum SignUpError {
     HashError(ArgonError),
 }
 
+#[derive(thiserror::Error, Debug)]
+pub enum LoginError {
+    #[error("Invalid username or password")]
+    InvalidCredentials,
+    #[error("Something went wrong")]
+    DatabaseError(SqlxError),
+    #[error("Failed to process password")]
+    HashError(ArgonError),
+}
+
 impl ApiError {
     pub fn new(code: StatusCode, message: Option<String>) -> Self {
         Self { code, message }
+    }
+}
+
+impl fmt::Display for ApiError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        if let Some(ref msg) = self.message {
+            write!(f, "{}: {}", self.code, msg)
+        } else {
+            write!(f, "{}", self.code)
+        }
     }
 }
 
@@ -38,22 +59,24 @@ impl From<SignUpError> for ApiError {
         }
     }
 }
-impl Into<HttpResponse> for ApiError {
-    fn into(self) -> HttpResponse {
-        let res = HttpResponse::new(self.code);
-        if let Some(msg) = self.message {
-            return res.set_body(Body::Message(Box::new(msg)));
+
+impl From<LoginError> for ApiError {
+    fn from(error: LoginError) -> ApiError {
+        match error {
+            LoginError::InvalidCredentials => ApiError::new(StatusCode::BAD_REQUEST, None),
+            LoginError::HashError(_) | LoginError::DatabaseError(_) => {
+                ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, None)
+            }
         }
-        res
     }
 }
 
-impl fmt::Display for ApiError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+impl actix_web::ResponseError for ApiError {
+    fn error_response(&self) -> HttpResponse {
+        let mut res = HttpResponse::build(self.code);
         if let Some(ref msg) = self.message {
-            write!(f, "{}: {}", self.code, msg)
-        } else {
-            write!(f, "{}", self.code)
+            return res.json(serde_json::json!({ "error": msg }));
         }
+        res.into()
     }
 }

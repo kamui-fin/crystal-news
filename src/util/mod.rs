@@ -2,6 +2,14 @@ use regex::RegexSet;
 use sqlx::{postgres::PgPoolOptions, Pool};
 use validator::ValidationError;
 
+use crate::api::config::Config;
+
+#[derive(Clone)]
+pub struct Context {
+    pub pool: sqlx::Pool<sqlx::Postgres>,
+    pub config: Config,
+}
+
 pub async fn create_pool(db_url: String) -> Result<Pool<sqlx::Postgres>, sqlx::Error> {
     PgPoolOptions::new()
         .max_connections(5)
