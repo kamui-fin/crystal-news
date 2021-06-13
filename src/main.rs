@@ -5,15 +5,15 @@ extern crate lazy_static;
 extern crate log;
 extern crate pretty_env_logger;
 
-pub mod api;
+pub mod config;
+pub mod error;
 pub mod models;
+pub mod routes;
 pub mod util;
 
 use actix_web::{middleware::Logger, App, HttpServer};
-use api::config::Config;
-use api::routes::{login, signup};
+use config::{Config, Context};
 use util::create_pool;
-use util::Context;
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -34,10 +34,9 @@ async fn main() -> std::io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
-            .wrap(Logger::new("%a %{User-Agent}i"))
+            .wrap(Logger::default())
             .data(context.clone())
-            .service(signup)
-            .service(login)
+            .configure(routes::config)
     })
     .bind(address)?
     .run()

@@ -1,8 +1,9 @@
-use crate::util::jwt::Claims;
-use crate::{models::user::UserCredentials, util::Context};
+use crate::models::user::UserCredentials;
+use crate::{models::user::User, util::jwt::Claims};
 use actix_web::{post, web, HttpResponse};
+use crate::config::Context;
 
-use super::error::Result;
+use crate::error::Result;
 
 fn send_token(user_id: i32, secret: &String) -> HttpResponse {
     let claims = Claims::new(user_id, 180);
@@ -15,7 +16,7 @@ pub async fn signup(
     data: web::Json<UserCredentials>,
     context: web::Data<Context>,
 ) -> Result<HttpResponse> {
-    let user = data.register(&context.pool).await?;
+    let user = User::register(&data, &context.pool).await?;
     Ok(send_token(user.id, &context.config.jwt_secret))
 }
 
@@ -24,6 +25,6 @@ pub async fn login(
     data: web::Json<UserCredentials>,
     context: web::Data<Context>,
 ) -> Result<HttpResponse> {
-    let user = data.login(&context.pool).await?;
+    let user = User::login(&data, &context.pool).await?;
     Ok(send_token(user.id, &context.config.jwt_secret))
 }

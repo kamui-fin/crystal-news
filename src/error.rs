@@ -2,7 +2,9 @@ use actix_web::{http::StatusCode, HttpResponse};
 use argon2::Error as ArgonError;
 use sqlx::Error as SqlxError;
 use std::fmt;
+
 pub type Result<T> = std::result::Result<T, ApiError>;
+
 #[derive(Debug)]
 pub struct ApiError {
     code: StatusCode,

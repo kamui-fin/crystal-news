@@ -19,3 +19,9 @@ impl Config {
         Config::init_from_env()
     }
 }
+
+#[derive(Clone)]
+pub struct Context {
+    pub pool: sqlx::Pool<sqlx::Postgres>,
+    pub config: Config,
+}
