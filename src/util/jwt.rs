@@ -1,20 +1,22 @@
 use chrono::{prelude::*, Duration};
-use jsonwebtoken::{EncodingKey, Header};
+use jsonwebtoken::{DecodingKey, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: i32,
-    pub iat: DateTime<Utc>,
-    pub exp: DateTime<Utc>,
+    pub iat: i64,
+    pub exp: i64
 }
 
 impl Claims {
-    pub fn new(sub: i32, exp_days: i64) -> Self {
+    pub fn new(sub: i32, exp_sec: i64) -> Self {
+        let now = Utc::now();
+        let exp_time = now + Duration::seconds(exp_sec);
         Claims {
             sub,
-            iat: Utc::now(),
-            exp: Utc::now() + Duration::days(exp_days),
+            iat: now.timestamp(),
+            exp: exp_time.timestamp(),
         }
     }
 
@@ -25,5 +27,14 @@ impl Claims {
             &EncodingKey::from_secret(secret.as_bytes()),
         )
         .unwrap() // will not panic since we're using a constructor
+    }
+
+    pub fn decode(token: String, secret: &str) -> Result<Self, jsonwebtoken::errors::Error> {
+        jsonwebtoken::decode::<Self>(
+            &token,
+            &DecodingKey::from_secret(secret.as_ref()),
+            &jsonwebtoken::Validation::default(),
+        )
+        .map(|e| e.claims)
     }
 }
