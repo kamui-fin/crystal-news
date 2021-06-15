@@ -8,7 +8,7 @@ pub type Result<T> = std::result::Result<T, ApiError>;
 #[derive(Debug)]
 pub struct ApiError {
     code: StatusCode,
-    message: Option<String>,
+    message: Option<&'static str>,
 }
 
 #[derive(thiserror::Error, Debug)]
@@ -33,8 +33,14 @@ pub enum LoginError {
     HashError(ArgonError),
 }
 
-impl ApiError {
-    pub fn new(code: StatusCode, message: Option<String>) -> Self {
+#[derive(thiserror::Error, Debug)]
+pub enum RefreshTokenError {
+    #[error("Something went wrong")]
+    DatabaseError(SqlxError),
+}
+
+impl<'a> ApiError {
+    pub fn new(code: StatusCode, message: Option<&'static str>) -> Self {
         Self { code, message }
     }
 }
@@ -62,6 +68,14 @@ impl From<SignUpError> for ApiError {
     }
 }
 
+impl From<RefreshTokenError> for ApiError {
+    fn from(error: RefreshTokenError) -> ApiError {
+        match error {
+            RefreshTokenError::DatabaseError(_) => ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, None),
+        }
+    }
+}
+
 impl From<LoginError> for ApiError {
     fn from(error: LoginError) -> ApiError {
         match error {
@@ -80,5 +94,9 @@ impl actix_web::ResponseError for ApiError {
             return res.json(serde_json::json!({ "error": msg }));
         }
         res.into()
+    }
+
+    fn status_code(&self) -> StatusCode {
+        self.code
     }
 }
