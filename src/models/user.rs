@@ -1,15 +1,15 @@
-use crate::error::{
-    LoginError,
-    SignUpError::{self, RequirementError, UsernameAlreadyExists},
-};
+use crate::error::{ApiError, Error};
+use actix_web::http::StatusCode;
 use argon2::Config as ArgonConfig;
 use argon2::Variant::Argon2id;
 use chrono::{DateTime, Utc};
 use rand::RngCore;
 use regex::{Regex, RegexSet};
 use serde::Deserialize;
-use validator::{Validate, ValidationError};
 use sqlx::Pool;
+use validator::{Validate, ValidationError};
+
+use crate::error::ApiResult;
 
 lazy_static! {
     static ref RE_USERNAME: Regex = Regex::new(r"^[a-zA-Z0-9_-]{3,20}$").expect("Invalid regex");
@@ -73,18 +73,14 @@ impl User {
     fn hash_password(plain: &String, salt: &[u8]) -> Result<String, argon2::Error> {
         let config = ArgonConfig {
             variant: Argon2id,
-            mem_cost: 15728,
             ..ArgonConfig::default()
         };
         argon2::hash_encoded(plain.as_bytes(), &salt, &config)
     }
 
-    pub async fn register(
-        creds: &SignUpCreds,
-        pool: &Pool<sqlx::Postgres>,
-    ) -> Result<Self, SignUpError> {
+    pub async fn register(creds: &SignUpCreds, pool: &Pool<sqlx::Postgres>) -> ApiResult<Self> {
         if let Err(e) = creds.validate() {
-            return Err(RequirementError(e));
+            return Err(Error::Validation(e));
         }
 
         let exist_user = sqlx::query!(
@@ -95,14 +91,17 @@ impl User {
         .await;
 
         if let Ok(_) = exist_user {
-            return Err(UsernameAlreadyExists);
+            return Err(Error::ApiResponse(ApiError::message(
+                StatusCode::BAD_REQUEST,
+                "Username already exists",
+            )));
         }
 
         let mut salt = [0u8; 8];
         rand::thread_rng().fill_bytes(&mut salt);
 
         let hashed_passwd =
-            User::hash_password(&creds.password, &salt).map_err(|e| SignUpError::HashError(e))?;
+            User::hash_password(&creds.password, &salt).map_err(|e| Error::Hash(e))?;
 
         sqlx::query_as!(
             User,
@@ -114,13 +113,16 @@ impl User {
         )
         .fetch_one(pool)
         .await
-        .map_err(|e| SignUpError::DatabaseError(e))
+        .map_err(|e| Error::Db(e))
     }
 
-    pub async fn login(
-        creds: &LoginCreds,
-        pool: &Pool<sqlx::Postgres>,
-    ) -> Result<Self, LoginError> {
+    pub async fn login(creds: &LoginCreds, pool: &Pool<sqlx::Postgres>) -> ApiResult<Self> {
+        let invalid_creds = || {
+            Error::ApiResponse(ApiError::message(
+                StatusCode::BAD_REQUEST,
+                "Invalid credentials",
+            ))
+        };
         let exist_user: User = sqlx::query_as!(
             User,
             "SELECT * FROM users WHERE username = $1 OR email = $1 LIMIT 1",
@@ -129,17 +131,17 @@ impl User {
         .fetch_one(pool)
         .await
         .map_err(|e| match e {
-            sqlx::error::Error::RowNotFound => LoginError::InvalidCredentials,
-            e => LoginError::DatabaseError(e),
+            sqlx::error::Error::RowNotFound => invalid_creds(),
+            e => Error::Db(e),
         })?;
 
-        let input_hash = User::hash_password(&creds.password, &exist_user.salt)
-            .map_err(|e| LoginError::HashError(e))?;
+        let input_hash =
+            User::hash_password(&creds.password, &exist_user.salt).map_err(|e| Error::Hash(e))?;
 
         if input_hash == exist_user.password {
             Ok(exist_user)
         } else {
-            Err(LoginError::InvalidCredentials)
+            Err(invalid_creds())
         }
     }
 }

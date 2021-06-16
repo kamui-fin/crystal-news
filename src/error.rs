@@ -1,102 +1,78 @@
-use actix_web::{http::StatusCode, HttpResponse};
-use argon2::Error as ArgonError;
-use sqlx::Error as SqlxError;
 use std::fmt;
 
-pub type Result<T> = std::result::Result<T, ApiError>;
+use actix_web::{dev::HttpResponseBuilder, http::StatusCode, HttpResponse};
+use serde_json::json;
+
+pub type ApiResult<T> = Result<T, Error>;
+
+#[derive(Debug)]
+pub enum Error {
+    ApiResponse(ApiError),
+    Db(sqlx::Error),
+    Validation(validator::ValidationErrors),
+    Hash(argon2::Error),
+}
 
 #[derive(Debug)]
 pub struct ApiError {
     code: StatusCode,
-    message: Option<&'static str>,
+    message: ApiErrorResponse,
 }
 
-#[derive(thiserror::Error, Debug)]
-pub enum SignUpError {
-    #[error("Credentials failed to meet requirement")]
-    RequirementError(validator::ValidationErrors),
-    #[error("Username already exists")]
-    UsernameAlreadyExists,
-    #[error("Something went wrong")]
-    DatabaseError(SqlxError),
-    #[error("Failed to process password")]
-    HashError(ArgonError),
+#[derive(Debug)]
+pub enum ApiErrorResponse {
+    Message(&'static str),
+    None,
 }
 
-#[derive(thiserror::Error, Debug)]
-pub enum LoginError {
-    #[error("Invalid username or password")]
-    InvalidCredentials,
-    #[error("Something went wrong")]
-    DatabaseError(SqlxError),
-    #[error("Failed to process password")]
-    HashError(ArgonError),
-}
-
-#[derive(thiserror::Error, Debug)]
-pub enum RefreshTokenError {
-    #[error("Something went wrong")]
-    DatabaseError(SqlxError),
-}
-
-impl<'a> ApiError {
-    pub fn new(code: StatusCode, message: Option<&'static str>) -> Self {
-        Self { code, message }
+impl ApiError {
+    pub fn message(code: StatusCode, message: &'static str) -> Self {
+        Self {
+            code,
+            message: ApiErrorResponse::Message(message),
+        }
     }
-}
 
-impl fmt::Display for ApiError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        if let Some(ref msg) = self.message {
-            write!(f, "{}: {}", self.code, msg)
-        } else {
-            write!(f, "{}", self.code)
+    pub fn code(code: StatusCode) -> Self {
+        Self {
+            code,
+            message: ApiErrorResponse::None,
+        }
+    }
+
+    pub fn repr(&self) -> serde_json::Value {
+        match self.message {
+            ApiErrorResponse::Message(m) => json!({ "error": m }),
+            ApiErrorResponse::None => json!({}),
         }
     }
 }
 
-impl From<SignUpError> for ApiError {
-    fn from(error: SignUpError) -> ApiError {
-        match error {
-            SignUpError::RequirementError(_) | SignUpError::UsernameAlreadyExists => {
-                ApiError::new(StatusCode::BAD_REQUEST, None)
-            }
-            SignUpError::HashError(_) | SignUpError::DatabaseError(_) => {
-                ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, None)
-            }
-        }
-    }
-}
-
-impl From<RefreshTokenError> for ApiError {
-    fn from(error: RefreshTokenError) -> ApiError {
-        match error {
-            RefreshTokenError::DatabaseError(_) => ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, None),
-        }
-    }
-}
-
-impl From<LoginError> for ApiError {
-    fn from(error: LoginError) -> ApiError {
-        match error {
-            LoginError::InvalidCredentials => ApiError::new(StatusCode::BAD_REQUEST, None),
-            LoginError::HashError(_) | LoginError::DatabaseError(_) => {
-                ApiError::new(StatusCode::INTERNAL_SERVER_ERROR, None)
-            }
-        }
-    }
-}
-
-impl actix_web::ResponseError for ApiError {
-    fn error_response(&self) -> HttpResponse {
-        let mut res = HttpResponse::build(self.code);
-        if let Some(ref msg) = self.message {
-            return res.json(serde_json::json!({ "error": msg }));
-        }
-        res.into()
-    }
-
+impl actix_web::ResponseError for Error {
     fn status_code(&self) -> StatusCode {
-        self.code
+        match self {
+            Error::ApiResponse(err) => err.code,
+            _ => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    fn error_response(&self) -> HttpResponse {
+        match self {
+            Error::ApiResponse(err) => HttpResponseBuilder::new(err.code).json(err.repr()),
+            _ => HttpResponseBuilder::new(StatusCode::INTERNAL_SERVER_ERROR)
+                .content_type("application/json")
+                .json(json!({"error": "An unexpected error has occured"})),
+        }
+    }
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Error::ApiResponse(e) => write!(f, "{}", e.repr()),
+            Error::Db(e) => e.fmt(f),
+            Error::Validation(e) => e.fmt(f),
+            Error::Hash(e) => e.fmt(f),
+        }
     }
 }

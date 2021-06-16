@@ -1,4 +1,4 @@
-use crate::error::RefreshTokenError;
+use crate::error::{ApiResult, Error};
 use chrono::{DateTime, Utc};
 use serde::Deserialize;
 use sqlx::{Pool, Postgres};
@@ -26,10 +26,7 @@ pub struct ReqRefresh {
 }
 
 impl RefreshToken {
-    pub async fn from_req(
-        req_ref: &ReqRefresh,
-        pool: &sqlx::Pool<Postgres>,
-    ) -> Result<Self, RefreshTokenError> {
+    pub async fn from_req(req_ref: &ReqRefresh, pool: &sqlx::Pool<Postgres>) -> ApiResult<Self> {
         sqlx::query_as!(
             Self,
             "SELECT * FROM refresh_token WHERE token = $1",
@@ -37,14 +34,10 @@ impl RefreshToken {
         )
         .fetch_one(pool)
         .await
-        .map_err(|e| RefreshTokenError::DatabaseError(e))
+        .map_err(|e| Error::Db(e))
     }
 
-    pub async fn create(
-        exp_sec: i64,
-        user_id: i32,
-        pool: &Pool<Postgres>,
-    ) -> Result<String, RefreshTokenError> {
+    pub async fn create(exp_sec: i64, user_id: i32, pool: &Pool<Postgres>) -> ApiResult<String> {
         let mut buffer = Uuid::encode_buffer();
         let token = Uuid::new_v4().to_simple().encode_upper(&mut buffer);
         let exp = chrono::Utc::now() + chrono::Duration::seconds(exp_sec);
@@ -58,14 +51,14 @@ impl RefreshToken {
         .fetch_one(pool)
         .await
         .map(|t| t.token)
-        .map_err(|e| RefreshTokenError::DatabaseError(e))
+        .map_err(|e| Error::Db(e))
     }
 
-    pub async fn remove(&self, pool: &Pool<Postgres>) -> Result<(), RefreshTokenError> {
+    pub async fn remove(&self, pool: &Pool<Postgres>) -> ApiResult<()> {
         sqlx::query!("DELETE FROM refresh_token WHERE tk_id = $1", self.tk_id)
             .execute(pool)
             .await
             .map(|_| ())
-            .map_err(|e| RefreshTokenError::DatabaseError(e))
+            .map_err(|e| Error::Db(e))
     }
 }

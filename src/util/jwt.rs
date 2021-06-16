@@ -6,7 +6,7 @@ use serde::{Deserialize, Serialize};
 pub struct Claims {
     pub sub: i32,
     pub iat: i64,
-    pub exp: i64
+    pub exp: i64,
 }
 
 impl Claims {
