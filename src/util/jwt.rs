@@ -37,4 +37,8 @@ impl Claims {
         )
         .map(|e| e.claims)
     }
+
+    pub fn validate(token: String, secret: &str) -> bool {
+        Self::decode(token, secret).is_ok()
+    }
 }

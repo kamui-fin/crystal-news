@@ -7,6 +7,7 @@ extern crate pretty_env_logger;
 
 pub mod config;
 pub mod error;
+pub mod middleware;
 pub mod models;
 pub mod routes;
 pub mod util;

@@ -1,11 +1,11 @@
-use crate::models::refresh_token::RefreshToken;
 use crate::{
     config::Context,
     models::user::{LoginCreds, SignUpCreds},
 };
 use crate::{error::ApiResult, models::refresh_token::ReqRefresh};
+use crate::{models::refresh_token::RefreshToken, util::get_bearer};
 use crate::{models::user::User, util::jwt::Claims};
-use actix_web::{delete, post, web, HttpRequest, HttpResponse};
+use actix_web::{web, HttpRequest, HttpResponse};
 use sqlx::Pool;
 use validator::Validate;
 
@@ -25,7 +25,6 @@ async fn generate_tokens(
         .json(serde_json::json!({ "accessToken": acc_tk, "refreshToken": ref_tk })))
 }
 
-#[post("/signup")]
 pub async fn signup(
     data: web::Json<SignUpCreds>,
     context: web::Data<Context>,
@@ -34,7 +33,6 @@ pub async fn signup(
     Ok(generate_tokens(user.id, &context.config.jwt_secret, None, &context.pool).await?)
 }
 
-#[post("/login")]
 pub async fn login(
     data: web::Json<LoginCreds>,
     context: web::Data<Context>,
@@ -43,27 +41,24 @@ pub async fn login(
     Ok(generate_tokens(user.id, &context.config.jwt_secret, None, &context.pool).await?)
 }
 
-#[delete("/logout")]
 pub async fn logout(req: HttpRequest, context: web::Data<Context>) -> ApiResult<HttpResponse> {
     let headers = req.headers();
-    if let Some(auth_header) = headers.get("Authorization") {
-        if let Ok(header_str) = auth_header.to_str() {
-            let bearer = ReqRefresh {
-                token: header_str[6..].trim().to_string(),
-            };
+    let bearer = get_bearer(headers);
+    if let Some(bearer) = bearer {
+        let req_refresh = ReqRefresh {
+            token: bearer
+        };
 
-            RefreshToken::from_req(&bearer, &context.pool)
-                .await?
-                .remove(&context.pool)
-                .await?;
+        RefreshToken::from_req(&req_refresh, &context.pool)
+            .await?
+            .remove(&context.pool)
+            .await?;
 
-            return Ok(HttpResponse::Ok().into());
-        }
+        return Ok(HttpResponse::Ok().into());
     }
     Ok(HttpResponse::InternalServerError().into())
 }
 
-#[post("/refreshToken")]
 pub async fn refresh_token(
     data: web::Json<ReqRefresh>,
     context: web::Data<Context>,
