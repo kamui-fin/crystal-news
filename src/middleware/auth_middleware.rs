@@ -1,7 +1,7 @@
 use std::pin::Pin;
 use std::task::{Context, Poll};
 
-use crate::util::jwt::Claims;
+use crate::util::jwt::validate;
 use crate::{config::Context as ApiContext, util::get_bearer};
 use actix_web::dev::{Service, Transform};
 use actix_web::{dev::ServiceRequest, dev::ServiceResponse, web, Error, HttpResponse};
@@ -53,7 +53,7 @@ where
         let bearer = get_bearer(headers);
         let secret = req.app_data::<web::Data<ApiContext>>().unwrap(); // data context will be on all routes
         if let Some(bearer) = bearer {
-            validity = Claims::validate(bearer, &secret.config.jwt_secret);
+            validity = validate(bearer, &secret.config.jwt_secret);
         }
 
         if validity {
@@ -65,11 +65,7 @@ where
             });
         } else {
             Box::pin(async move {
-                Ok(req.into_response(
-                    HttpResponse::Unauthorized()
-                        .body("i will not let you in")
-                        .into_body(),
-                ))
+                Ok(req.into_response(HttpResponse::Unauthorized().body("").into_body()))
             })
         }
     }

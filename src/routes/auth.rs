@@ -1,11 +1,17 @@
 use crate::{
     config::Context,
-    models::user::{LoginCreds, SignUpCreds},
+    db::{
+        refresh_token::{delete_refresh_token, get_token_from_req, RespToken},
+        user::{login_user, register_user, LoginCreds, SignUpCreds},
+    },
 };
-use crate::{error::ApiResult, models::refresh_token::ReqRefresh};
-use crate::{models::refresh_token::RefreshToken, util::get_bearer};
-use crate::{models::user::User, util::jwt::Claims};
-use actix_web::{web, HttpRequest, HttpResponse};
+use crate::{db::refresh_token::create_refresh_token, util::get_bearer};
+use crate::{db::refresh_token::ReqRefresh, error::ApiResult};
+use crate::{
+    error::{ApiError, Error},
+    util::jwt::{gen_token, Claims},
+};
+use actix_web::{http::StatusCode, web, HttpRequest, HttpResponse};
 use sqlx::Pool;
 use validator::Validate;
 
@@ -16,56 +22,75 @@ async fn generate_tokens(
     pool: &Pool<sqlx::Postgres>,
 ) -> ApiResult<HttpResponse> {
     let claims = Claims::new(user_id, 60);
-    let acc_tk = claims.gen_token(secret);
+    let acc_tk = gen_token(&claims, secret);
     let ref_tk = match ref_token {
         Some(ref_token) => ref_token,
-        None => RefreshToken::create(((60 * 60) * 24) * 100, user_id, pool).await?,
+        None => create_refresh_token(((60 * 60) * 24) * 100, user_id, pool).await?,
     };
-    Ok(HttpResponse::Ok()
-        .json(serde_json::json!({ "accessToken": acc_tk, "refreshToken": ref_tk })))
+
+    match acc_tk {
+        Ok(acc_tk) => Ok(HttpResponse::Ok().json(RespToken {
+            access_token: acc_tk,
+            refresh_token: ref_tk,
+        })),
+        Err(_) => Err(Error::ApiResponse(ApiError::code(
+            StatusCode::INTERNAL_SERVER_ERROR,
+        ))),
+    }
 }
 
 pub async fn signup(
     data: web::Json<SignUpCreds>,
     context: web::Data<Context>,
 ) -> ApiResult<HttpResponse> {
-    let user = User::register(&data, &context.pool).await?;
-    Ok(generate_tokens(user.id, &context.config.jwt_secret, None, &context.pool).await?)
+    let user = register_user(&data, &context.pool).await?;
+    generate_tokens(
+        user.user_id,
+        &context.config.jwt_secret,
+        None,
+        &context.pool,
+    )
+    .await
 }
 
 pub async fn login(
     data: web::Json<LoginCreds>,
     context: web::Data<Context>,
 ) -> ApiResult<HttpResponse> {
-    let user = User::login(&data, &context.pool).await?;
-    Ok(generate_tokens(user.id, &context.config.jwt_secret, None, &context.pool).await?)
+    let user = login_user(&data, &context.pool).await?;
+    generate_tokens(
+        user.user_id,
+        &context.config.jwt_secret,
+        None,
+        &context.pool,
+    )
+    .await
 }
 
 pub async fn logout(req: HttpRequest, context: web::Data<Context>) -> ApiResult<HttpResponse> {
     let headers = req.headers();
     let bearer = get_bearer(headers);
-    if let Some(bearer) = bearer {
-        let req_refresh = ReqRefresh {
-            token: bearer
-        };
 
-        RefreshToken::from_req(&req_refresh, &context.pool)
-            .await?
-            .remove(&context.pool)
-            .await?;
+    if let Some(bearer) = bearer {
+        let req_refresh = ReqRefresh { token: bearer };
+        let token = get_token_from_req(&req_refresh, &context.pool).await?;
+        delete_refresh_token(&token, &context.pool).await?;
 
         return Ok(HttpResponse::Ok().into());
     }
-    Ok(HttpResponse::InternalServerError().into())
+
+    Err(Error::ApiResponse(ApiError::code(
+        StatusCode::INTERNAL_SERVER_ERROR,
+    )))
 }
 
 pub async fn refresh_token(
     data: web::Json<ReqRefresh>,
     context: web::Data<Context>,
 ) -> ApiResult<HttpResponse> {
-    let ref_token = RefreshToken::from_req(&data, &context.pool).await?;
+    let ref_token = get_token_from_req(&data, &context.pool).await?;
     if let Err(_) = ref_token.validate() {
-        ref_token.remove(&context.pool).await?;
+        delete_refresh_token(&ref_token, &context.pool).await?;
     }
     Ok(generate_tokens(
         ref_token.user_id,

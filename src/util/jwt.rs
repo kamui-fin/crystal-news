@@ -1,8 +1,8 @@
 use chrono::{prelude::*, Duration};
-use jsonwebtoken::{DecodingKey, EncodingKey, Header};
+use jsonwebtoken::{errors::Error, DecodingKey, EncodingKey, Header};
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize, PartialEq)]
 pub struct Claims {
     pub sub: i32,
     pub iat: i64,
@@ -19,26 +19,25 @@ impl Claims {
             exp: exp_time.timestamp(),
         }
     }
+}
 
-    pub fn gen_token(&self, secret: &str) -> String {
-        jsonwebtoken::encode(
-            &Header::default(),
-            self,
-            &EncodingKey::from_secret(secret.as_bytes()),
-        )
-        .unwrap() // will not panic since we're using a constructor
-    }
+pub fn gen_token(claims: &Claims, secret: &str) -> Result<String, Error> {
+    jsonwebtoken::encode(
+        &Header::default(),
+        claims,
+        &EncodingKey::from_secret(secret.as_bytes()),
+    )
+}
 
-    pub fn decode(token: String, secret: &str) -> Result<Self, jsonwebtoken::errors::Error> {
-        jsonwebtoken::decode::<Self>(
-            &token,
-            &DecodingKey::from_secret(secret.as_ref()),
-            &jsonwebtoken::Validation::default(),
-        )
-        .map(|e| e.claims)
-    }
+pub fn decode(token: String, secret: &str) -> Result<Claims, Error> {
+    jsonwebtoken::decode::<Claims>(
+        &token,
+        &DecodingKey::from_secret(secret.as_ref()),
+        &jsonwebtoken::Validation::default(),
+    )
+    .map(|e| e.claims)
+}
 
-    pub fn validate(token: String, secret: &str) -> bool {
-        Self::decode(token, secret).is_ok()
-    }
+pub fn validate(token: String, secret: &str) -> bool {
+    decode(token, secret).is_ok()
 }

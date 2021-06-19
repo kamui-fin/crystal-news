@@ -1,9 +1,6 @@
-use actix_web::{
-    web::{self, ServiceConfig},
-    HttpResponse,
-};
+use actix_web::web::{self, ServiceConfig};
 
-mod auth;
+pub mod auth;
 
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(web::resource("/signup").route(web::post().to(auth::signup)))
