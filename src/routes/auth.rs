@@ -12,20 +12,18 @@ use crate::{
     util::jwt::{gen_token, Claims},
 };
 use actix_web::{http::StatusCode, web, HttpRequest, HttpResponse};
-use sqlx::Pool;
 use validator::Validate;
 
 async fn generate_tokens(
     user_id: i32,
-    secret: &String,
     ref_token: Option<String>,
-    pool: &Pool<sqlx::Postgres>,
+    context: &web::Data<Context>,
 ) -> ApiResult<HttpResponse> {
-    let claims = Claims::new(user_id, 60);
-    let acc_tk = gen_token(&claims, secret);
+    let claims = Claims::new(user_id, context.config.acc_token_exp);
+    let acc_tk = gen_token(&claims, &context.config.jwt_secret);
     let ref_tk = match ref_token {
         Some(ref_token) => ref_token,
-        None => create_refresh_token(((60 * 60) * 24) * 100, user_id, pool).await?,
+        None => create_refresh_token(context.config.ref_token_exp, user_id, &context.pool).await?,
     };
 
     match acc_tk {
@@ -44,13 +42,7 @@ pub async fn signup(
     context: web::Data<Context>,
 ) -> ApiResult<HttpResponse> {
     let user = register_user(&data, &context.pool).await?;
-    generate_tokens(
-        user.user_id,
-        &context.config.jwt_secret,
-        None,
-        &context.pool,
-    )
-    .await
+    generate_tokens(user.user_id, None, &context).await
 }
 
 pub async fn login(
@@ -58,13 +50,7 @@ pub async fn login(
     context: web::Data<Context>,
 ) -> ApiResult<HttpResponse> {
     let user = login_user(&data, &context.pool).await?;
-    generate_tokens(
-        user.user_id,
-        &context.config.jwt_secret,
-        None,
-        &context.pool,
-    )
-    .await
+    generate_tokens(user.user_id, None, &context).await
 }
 
 pub async fn logout(req: HttpRequest, context: web::Data<Context>) -> ApiResult<HttpResponse> {
@@ -92,11 +78,5 @@ pub async fn refresh_token(
     if let Err(_) = ref_token.validate() {
         delete_refresh_token(&ref_token, &context.pool).await?;
     }
-    Ok(generate_tokens(
-        ref_token.user_id,
-        &context.config.jwt_secret,
-        Some(ref_token.token),
-        &context.pool,
-    )
-    .await?)
+    Ok(generate_tokens(ref_token.user_id, Some(ref_token.token), &context).await?)
 }
