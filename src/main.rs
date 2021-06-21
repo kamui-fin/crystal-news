@@ -1,6 +1,6 @@
 use actix_web::{middleware::Logger, App, HttpServer};
+use crystal_news::config::init_context;
 use crystal_news::routes;
-use crystal_news::util::init_context;
 use log::warn;
 
 #[actix_web::main]

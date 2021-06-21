@@ -1,5 +1,4 @@
-use crate::error::{ApiError, Error};
-use actix_web::http::StatusCode;
+use crate::error::ApiError;
 use argon2::Config as ArgonConfig;
 use argon2::Variant::Argon2id;
 use chrono::{DateTime, Utc};
@@ -78,8 +77,8 @@ fn hash_password(plain: &String, salt: &[u8]) -> Result<String, argon2::Error> {
 }
 
 pub async fn register_user(creds: &SignUpCreds, pool: &Pool<sqlx::Postgres>) -> ApiResult<User> {
-    if let Err(e) = creds.validate() {
-        return Err(Error::Validation(e));
+    if let Err(_) = creds.validate() {
+        return Err(ApiError::Validation);
     }
 
     let exist_user = sqlx::query!(
@@ -90,16 +89,14 @@ pub async fn register_user(creds: &SignUpCreds, pool: &Pool<sqlx::Postgres>) -> 
     .await;
 
     if let Ok(_) = exist_user {
-        return Err(Error::ApiResponse(ApiError::message(
-            StatusCode::BAD_REQUEST,
-            "Username already exists",
-        )));
+        return Err(ApiError::InvalidCredentials);
     }
 
     let mut salt = [0u8; 8];
     rand::thread_rng().fill_bytes(&mut salt);
 
-    let hashed_passwd = hash_password(&creds.password, &salt).map_err(|e| Error::Hash(e))?;
+    let hashed_passwd =
+        hash_password(&creds.password, &salt).map_err(|_| ApiError::InternalServerError)?;
 
     sqlx::query_as!(
         User,
@@ -111,16 +108,10 @@ pub async fn register_user(creds: &SignUpCreds, pool: &Pool<sqlx::Postgres>) -> 
     )
     .fetch_one(pool)
     .await
-    .map_err(|e| Error::Db(e))
+    .map_err(|_| ApiError::InternalServerError)
 }
 
 pub async fn login_user(creds: &LoginCreds, pool: &Pool<sqlx::Postgres>) -> ApiResult<User> {
-    let invalid_creds = || {
-        Error::ApiResponse(ApiError::message(
-            StatusCode::BAD_REQUEST,
-            "Invalid credentials",
-        ))
-    };
     let exist_user: User = sqlx::query_as!(
         User,
         "SELECT * FROM users WHERE username = $1 OR email = $1 LIMIT 1",
@@ -129,16 +120,16 @@ pub async fn login_user(creds: &LoginCreds, pool: &Pool<sqlx::Postgres>) -> ApiR
     .fetch_one(pool)
     .await
     .map_err(|e| match e {
-        sqlx::error::Error::RowNotFound => invalid_creds(),
-        e => Error::Db(e),
+        sqlx::error::Error::RowNotFound => ApiError::InvalidCredentials,
+        _ => ApiError::InternalServerError,
     })?;
 
-    let input_hash =
-        hash_password(&creds.password, &exist_user.salt).map_err(|e| Error::Hash(e))?;
+    let input_hash = hash_password(&creds.password, &exist_user.salt)
+        .map_err(|_| ApiError::InternalServerError)?;
 
     if input_hash == exist_user.password {
         Ok(exist_user)
     } else {
-        Err(invalid_creds())
+        Err(ApiError::InvalidCredentials)
     }
 }

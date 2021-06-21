@@ -1,5 +1,6 @@
 use dotenv::dotenv;
-use envconfig::{Envconfig, Error};
+use envconfig::Envconfig;
+use sqlx::{postgres::PgPoolOptions, Pool};
 
 #[derive(Envconfig, Debug, Clone)]
 pub struct Config {
@@ -17,15 +18,30 @@ pub struct Config {
     pub ref_token_exp: i64,
 }
 
+#[derive(Clone)]
+pub struct Context {
+    pub pool: sqlx::Pool<sqlx::Postgres>,
+    pub config: Config,
+}
+
 impl Config {
-    pub fn new() -> Result<Self, Error> {
+    pub fn new() -> Result<Self, envconfig::Error> {
         dotenv().ok();
         Config::init_from_env()
     }
 }
 
-#[derive(Clone)]
-pub struct Context {
-    pub pool: sqlx::Pool<sqlx::Postgres>,
-    pub config: Config,
+pub async fn create_pool(db_url: String) -> Result<Pool<sqlx::Postgres>, sqlx::Error> {
+    PgPoolOptions::new()
+        .max_connections(5)
+        .connect(&db_url)
+        .await
+}
+
+pub async fn init_context() -> Context {
+    let config = Config::new().expect("Environmental variables need to be set");
+    let pool = create_pool(config.db_url.clone())
+        .await
+        .expect("Failed to create a database pool");
+    Context { pool, config }
 }

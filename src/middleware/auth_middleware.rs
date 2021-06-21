@@ -1,12 +1,11 @@
-use std::pin::Pin;
-use std::task::{Context, Poll};
-
-use crate::util::jwt::validate;
-use crate::{config::Context as ApiContext, util::get_bearer};
+use crate::jwt::validate;
+use crate::{config::Context as ApiContext, jwt::get_jwt_from_bearer};
 use actix_web::dev::{Service, Transform};
 use actix_web::{dev::ServiceRequest, dev::ServiceResponse, web, Error, HttpResponse};
 use futures::future::{ok, Ready};
 use futures::Future;
+use std::pin::Pin;
+use std::task::{Context, Poll};
 
 pub struct Authorization;
 
@@ -50,10 +49,11 @@ where
     fn call(&mut self, req: ServiceRequest) -> Self::Future {
         let headers = req.headers();
         let mut validity: bool = false;
-        let bearer = get_bearer(headers);
-        let secret = req.app_data::<web::Data<ApiContext>>().unwrap(); // data context will be on all routes
+        let bearer = get_jwt_from_bearer(headers);
+        let context = req.app_data::<web::Data<ApiContext>>().unwrap(); // data context will be on all routes
+
         if let Some(bearer) = bearer {
-            validity = validate(bearer, &secret.config.jwt_secret);
+            validity = validate(bearer, &context.config.jwt_secret);
         }
 
         if validity {

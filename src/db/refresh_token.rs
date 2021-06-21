@@ -1,4 +1,7 @@
-use crate::error::{ApiResult, Error};
+use crate::{
+    error::{ApiError, ApiResult},
+    jwt::JWT,
+};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
@@ -16,7 +19,7 @@ pub struct RefreshToken {
 
 #[derive(Deserialize, Serialize)]
 pub struct ReqRefresh {
-    pub token: String,
+    pub token: JWT,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -38,11 +41,11 @@ pub async fn get_token_from_req(
     sqlx::query_as!(
         RefreshToken,
         "SELECT * FROM refresh_token WHERE token = $1",
-        req_ref.token
+        req_ref.token.0
     )
     .fetch_one(pool)
     .await
-    .map_err(|e| Error::Db(e))
+    .map_err(|_| ApiError::InternalServerError)
 }
 
 pub async fn create_refresh_token(
@@ -63,7 +66,7 @@ pub async fn create_refresh_token(
     .fetch_one(pool)
     .await
     .map(|t| t.token)
-    .map_err(|e| Error::Db(e))
+    .map_err(|_| ApiError::InternalServerError)
 }
 
 pub async fn delete_refresh_token(
@@ -77,5 +80,5 @@ pub async fn delete_refresh_token(
     .execute(pool)
     .await
     .map(|_| ())
-    .map_err(|e| Error::Db(e))
+    .map_err(|_| ApiError::InternalServerError)
 }

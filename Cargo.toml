@@ -25,3 +25,4 @@ async-trait = "0.1.50"
 uuid = {version = "0.8.2", features = ["v4"]}
 futures = "0.3.15"
 rss = "1.10.0"
+derive_more = "0.99.14"

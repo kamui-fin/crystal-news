@@ -5,13 +5,13 @@ use crate::{
         user::{login_user, register_user, LoginCreds, SignUpCreds},
     },
 };
-use crate::{db::refresh_token::create_refresh_token, util::get_bearer};
+use crate::{db::refresh_token::create_refresh_token, jwt::get_jwt_from_bearer};
 use crate::{db::refresh_token::ReqRefresh, error::ApiResult};
 use crate::{
-    error::{ApiError, Error},
-    util::jwt::{gen_token, Claims},
+    error::ApiError,
+    jwt::{gen_token, Claims},
 };
-use actix_web::{http::StatusCode, web, HttpRequest, HttpResponse};
+use actix_web::{web, HttpRequest, HttpResponse};
 use validator::Validate;
 
 async fn generate_tokens(
@@ -28,12 +28,10 @@ async fn generate_tokens(
 
     match acc_tk {
         Ok(acc_tk) => Ok(HttpResponse::Ok().json(RespToken {
-            access_token: acc_tk,
+            access_token: acc_tk.0,
             refresh_token: ref_tk,
         })),
-        Err(_) => Err(Error::ApiResponse(ApiError::code(
-            StatusCode::INTERNAL_SERVER_ERROR,
-        ))),
+        Err(_) => Err(ApiError::InternalServerError),
     }
 }
 
@@ -55,7 +53,7 @@ pub async fn login(
 
 pub async fn logout(req: HttpRequest, context: web::Data<Context>) -> ApiResult<HttpResponse> {
     let headers = req.headers();
-    let bearer = get_bearer(headers);
+    let bearer = get_jwt_from_bearer(headers);
 
     if let Some(bearer) = bearer {
         let req_refresh = ReqRefresh { token: bearer };
@@ -65,9 +63,7 @@ pub async fn logout(req: HttpRequest, context: web::Data<Context>) -> ApiResult<
         return Ok(HttpResponse::Ok().into());
     }
 
-    Err(Error::ApiResponse(ApiError::code(
-        StatusCode::INTERNAL_SERVER_ERROR,
-    )))
+    Err(ApiError::InternalServerError)
 }
 
 pub async fn refresh_token(
