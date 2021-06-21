@@ -19,10 +19,16 @@ pub fn config(cfg: &mut ServiceConfig) {
         )
         .service(
             web::scope("/sources")
-                .service(web::resource("/subscribe").route(web::post().to(sources::subscribe_feed)))
                 .service(
-                    web::resource("/unsubscribe")
-                        .route(web::delete().to(sources::unsubscribe_feed)),
+                    web::resource("")
+                        .route(web::post().to(sources::subscribe_feed))
+                        .route(web::get().to(sources::get_all_feeds)),
+                )
+                .service(
+                    web::resource("/{id}")
+                        .route(web::delete().to(sources::unsubscribe_feed))
+                        .route(web::put().to(sources::update_feed))
+                        .route(web::get().to(sources::get_feed)),
                 )
                 .wrap(Authorization),
         );
