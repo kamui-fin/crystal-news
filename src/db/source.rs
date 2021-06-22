@@ -9,12 +9,12 @@ use validator::Validate;
 
 #[derive(Debug, Serialize)]
 pub struct Source {
-    source_id: i32,
+    pub source_id: i32,
     user_id: i32,
     title: String,
     description: String,
     website: String,
-    feed_link: String,
+    pub feed_link: String,
     last_updated: Option<DateTime<Utc>>,
 }
 
@@ -38,7 +38,7 @@ pub async fn add_source(
     pool: &Pool<sqlx::Postgres>,
 ) -> ApiResult<Source> {
     add_source.validate().map_err(|_| ApiError::Validation)?;
-    let info = feed::get_source_info(&add_source.feed_link)
+    let info = feed::get_channel_info(&add_source.feed_link)
         .await
         .ok_or(ApiError::RssFetch)?;
     sqlx::query_as!(

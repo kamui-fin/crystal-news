@@ -1,6 +1,7 @@
 use crate::middleware::auth_middleware::Authorization;
 use actix_web::web::{self, ServiceConfig};
 
+pub mod articles;
 pub mod auth;
 pub mod sources;
 
@@ -16,6 +17,11 @@ pub fn config(cfg: &mut ServiceConfig) {
             web::resource("/refreshToken")
                 .wrap(Authorization)
                 .route(web::post().to(auth::refresh_token)),
+        )
+        .service(
+            web::resource("/feed")
+                .wrap(Authorization)
+                .route(web::post().to(articles::get_article_feed)),
         )
         .service(
             web::scope("/sources")

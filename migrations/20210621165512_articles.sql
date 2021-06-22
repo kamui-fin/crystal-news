@@ -5,7 +5,9 @@ CREATE TABLE IF NOT EXISTS articles(
     title VARCHAR,
     description VARCHAR,
     author VARCHAR,
+    pub_date TIMESTAMPTZ,
     content VARCHAR,
+    guid VARCHAR,
     CONSTRAINT fk_source
         FOREIGN KEY(source_id)
             REFERENCES sources(source_id)
