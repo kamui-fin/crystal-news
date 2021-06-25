@@ -2,7 +2,7 @@ use crate::{
     config::Context,
     db::{
         article::{add_articles, get_latest_article},
-        source::{get_all_sources},
+        source::get_all_sources,
     },
     error::ApiResult,
     feed::generate_feed,
