@@ -38,6 +38,7 @@ pub struct SignUpCreds {
 }
 
 #[derive(Validate, Deserialize, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct LoginCreds {
     #[validate(custom = "validate_email_or_username")]
     pub username_or_email: String,

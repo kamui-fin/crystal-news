@@ -8,9 +8,19 @@ export interface RegisterData {
     email: string;
 }
 
-export interface TokenResponse {
+export interface LoginData {
+    usernameOrEmail: string;
+    password: string;
+}
+
+
+export interface Tokens {
     accessToken: string;
     refreshToken: string;
+}
+
+export interface SavedUser extends Tokens {
+    userId: number;
 }
 
 export interface RootState {

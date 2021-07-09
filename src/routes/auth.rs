@@ -12,6 +12,7 @@ use crate::{
     jwt::{gen_token, Claims},
 };
 use actix_web::{web, HttpRequest, HttpResponse};
+use serde_json::json;
 use validator::Validate;
 
 async fn generate_tokens(
@@ -27,12 +28,23 @@ async fn generate_tokens(
     };
 
     match acc_tk {
-        Ok(acc_tk) => Ok(HttpResponse::Ok().json(RespToken {
-            access_token: acc_tk.0,
-            refresh_token: ref_tk,
-        })),
+        Ok(acc_tk) => Ok(HttpResponse::Ok().json(serde_json::json!(
+                {
+                    "tokens": RespToken {
+                        access_token: acc_tk.0,
+                        refresh_token: ref_tk,
+                    },
+                    "userId": claims.sub,
+                }
+        ))),
         Err(_) => Err(ApiError::InternalServerError),
     }
+}
+
+pub async fn auth_check() -> ApiResult<HttpResponse> {
+    Ok(HttpResponse::Ok().body(json!({
+        "msg": "OK"
+    })))
 }
 
 pub async fn signup(

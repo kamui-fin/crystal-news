@@ -14,6 +14,11 @@ pub fn config(cfg: &mut ServiceConfig) {
                 .route(web::delete().to(auth::logout)),
         )
         .service(
+            web::resource("/authCheck")
+                .wrap(Authorization)
+                .route(web::get().to(auth::auth_check)),
+        )
+        .service(
             web::resource("/refreshToken")
                 .wrap(Authorization)
                 .route(web::post().to(auth::refresh_token)),

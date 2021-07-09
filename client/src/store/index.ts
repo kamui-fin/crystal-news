@@ -1,22 +1,35 @@
-import { Context, createWrapper } from "next-redux-wrapper";
+import { Context, createWrapper, HYDRATE } from "next-redux-wrapper";
 import {
+    AnyAction,
     applyMiddleware,
     combineReducers,
     createStore,
-    Reducer,
+    Middleware,
     Store,
 } from "redux";
-import { composeWithDevTools } from "redux-devtools-extension";
 import thunk from "redux-thunk";
-import { RootState } from "src/types";
+import { RootState } from "types";
 import { auth } from "./reducers/authReducer";
+import { composeWithDevTools } from "redux-devtools-extension";
 
-const reducer = combineReducers({
-    auth,
-});
+const bindMiddleware = (middleware: Middleware[]) => {
+    if (process.env.NODE_ENV !== 'production') {
+        return composeWithDevTools(applyMiddleware(...middleware))
+    }
+    return applyMiddleware(...middleware)
+}
+
+const reducer = (state: RootState = {} as RootState, action: AnyAction) => {
+    if (action.type == HYDRATE) {
+        return { ...state, ...action.payload }
+    }
+    else {
+        return combineReducers({ auth })
+    }
+}
 
 export const initStore = (context: Context) => {
-    return createStore(reducer, composeWithDevTools(applyMiddleware(thunk)));
+    return createStore(reducer, bindMiddleware([thunk]));
 };
 
 export const wrapper = createWrapper<Store<RootState>>(initStore, {

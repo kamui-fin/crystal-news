@@ -1,5 +1,13 @@
+import AuthGuard from "middleware/authGuard";
+
 const Main = () => {
-    return <div>Feed</div>;
+    return (
+        <AuthGuard>
+            <div>
+                Feed
+            </div>
+        </AuthGuard>
+    )
 };
 
 export default Main;
