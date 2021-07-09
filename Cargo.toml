@@ -7,6 +7,7 @@ edition = "2018"
 [dependencies]
 actix-web = { version = "3", features = ["rustls"] }
 actix-rt = "1"
+actix-cors = "0.5.4"
 rand = "0.8.3"
 rust-argon2 = "0.8.3"
 dotenv = "0.15.0"

@@ -23,6 +23,7 @@ pub struct ReqRefresh {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
+#[serde(rename_all = "camelCase")]
 pub struct RespToken {
     pub access_token: String,
     pub refresh_token: String,

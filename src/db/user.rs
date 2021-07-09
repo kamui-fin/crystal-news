@@ -26,6 +26,7 @@ pub struct User {
 
 #[derive(Validate, Serialize, Deserialize)]
 #[validate(schema(function = "validate_confirm_password", skip_on_field_errors = false))]
+#[serde(rename_all = "camelCase")]
 pub struct SignUpCreds {
     #[validate(regex = "RE_USERNAME")]
     pub username: String,

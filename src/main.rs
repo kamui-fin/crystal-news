@@ -1,4 +1,5 @@
-use actix_web::{middleware::Logger, App, HttpServer};
+use actix_cors::Cors;
+use actix_web::{http, middleware::Logger, App, HttpServer};
 use crystal_news::config::init_context;
 use crystal_news::routes;
 use log::warn;
@@ -13,7 +14,16 @@ async fn main() -> std::io::Result<()> {
         warn!("Failed to perform SQLx migrations: {}", e);
     }
     HttpServer::new(move || {
+        let cors = Cors::default()
+            .allowed_origin("http://localhost:3000")
+            .allowed_methods(vec!["GET", "POST", "DELETE", "PUT"])
+            .allowed_headers(vec![http::header::AUTHORIZATION, http::header::ACCEPT])
+            .allowed_header(http::header::CONTENT_TYPE)
+            .supports_credentials()
+            .max_age(3600);
+
         App::new()
+            .wrap(cors)
             .wrap(Logger::default())
             .data(context.clone())
             .configure(routes::config)

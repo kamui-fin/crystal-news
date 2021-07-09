@@ -1,28 +1,20 @@
 import { useForm } from "react-hook-form";
-import axios from "axios";
+import { useRouter } from "next/dist/client/router";
+import { signUp } from "src/store/actions/authActions";
+import { RegisterData } from "src/types";
+import { useDispatch } from "react-redux";
 
-interface RegisterData {
-    username: String;
-    password: String;
-    confirmPassword: String;
-    email: String;
-};
+const Register: React.FC = () => {
+    const router = useRouter();
+    const dispatch = useDispatch();
 
-interface TokenResponse {
-    accessToken: String,
-    refreshToken: String,
-}
-
-const Register = () => {
     const {
         register,
         handleSubmit,
         formState: { errors },
     } = useForm<RegisterData>();
     const onSubmit = async (data: RegisterData) => {
-        const res = await axios.post("http://localhost:8080/signup", data);
-        const tokenRes: TokenResponse = res.data;
-        console.log(tokenRes);
+        dispatch(signUp(data, router));
     };
 
     return (
