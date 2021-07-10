@@ -37,13 +37,8 @@ export const getUserData = (): SavedUser | null => {
 }
 
 export const isValidToken = async (accessToken: string): Promise<boolean> => {
-    try {
-        await axios.get(`${API}/authCheck`, {
-            headers: `Authorization: Bearer ${accessToken}`
-        });
-        return true;
-    }
-    catch (error) {
-        return false;
-    }
+    return axios.get(`${API}/authCheck`, {
+        headers: `Authorization: Bearer ${accessToken}`
+    }).then(() => true)
+        .catch(() => false);
 }

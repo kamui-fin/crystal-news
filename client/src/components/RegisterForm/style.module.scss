@@ -1,13 +1,13 @@
 @import "../../styles/colors";
 
-.loginContainer {
+.container {
     width: 26rem;
     margin: 0 auto;
     margin-top: 5rem;
 
     .welcome,
     .prompt,
-    .signUpLink {
+    .loginLink {
         text-align: center;
     }
 
@@ -20,7 +20,7 @@
         margin-top: 0.7rem;
     }
 
-    .loginForm {
+    .form {
         display: flex;
         flex-direction: column;
 
@@ -62,7 +62,7 @@
         }
     }
 
-    .signUpLink {
+    .loginLink {
         margin-top: 1.5rem;
 
         a {

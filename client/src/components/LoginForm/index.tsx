@@ -37,12 +37,12 @@ const LoginForm: React.FC = () => {
 
             <form className={styles.loginForm} onSubmit={handleSubmit(onSubmit)}>
                 <div className={styles.inputContainer}>
-                    <input {...register("usernameOrEmail")} className={cx("inputBox", { "inputError": errors.usernameOrEmail })} placeholder="Enter your email" />
+                    <input {...register("usernameOrEmail")} className={cx("inputBox", { "inputError": errors.usernameOrEmail })} placeholder="Enter your username or email" />
                     <p className={styles.error}>{errors.usernameOrEmail?.message}</p>
                 </div>
 
                 <div className={styles.inputContainer}>
-                    <input {...register("password")} className={cx("inputBox", { "inputError": errors.usernameOrEmail })} type="password" placeholder="Enter your password" />
+                    <input {...register("password")} className={cx("inputBox", { "inputError": errors.password })} type="password" placeholder="Enter your password" />
                     <p className={styles.error}>{errors.password?.message}</p>
                 </div>
 

@@ -3,7 +3,7 @@ use argon2::Config as ArgonConfig;
 use argon2::Variant::Argon2id;
 use chrono::{DateTime, Utc};
 use rand::RngCore;
-use regex::{Regex, RegexSet};
+use regex::{Regex};
 use serde::{Deserialize, Serialize};
 use sqlx::Pool;
 use validator::{Validate, ValidationError};
@@ -12,6 +12,7 @@ use crate::error::ApiResult;
 
 lazy_static! {
     static ref RE_USERNAME: Regex = Regex::new(r"^[a-zA-Z0-9_-]{3,20}$").expect("Invalid regex");
+    static ref RE_PASS: Regex = Regex::new(r"^*{6,}$").expect("Invalid regex");
 }
 
 #[derive(Debug)]
@@ -32,7 +33,7 @@ pub struct SignUpCreds {
     pub username: String,
     #[validate(email)]
     pub email: String,
-    #[validate(custom = "validate_password")]
+    #[validate(regex = "RE_PASS")]
     pub password: String,
     pub confirm_password: String,
 }
@@ -42,7 +43,7 @@ pub struct SignUpCreds {
 pub struct LoginCreds {
     #[validate(custom = "validate_email_or_username")]
     pub username_or_email: String,
-    #[validate(custom = "validate_password")]
+    #[validate(regex = "RE_PASS")]
     pub password: String,
 }
 
@@ -57,17 +58,6 @@ fn validate_email_or_username(email_usr: &String) -> Result<(), ValidationError>
     matches
         .then(|| ())
         .ok_or(ValidationError::new("username_email"))
-}
-
-fn validate_password(passwd: &String) -> Result<(), ValidationError> {
-    let re_passwd = RegexSet::new(&[r"^[A-Za-z0-9]{6,}$", r"[A-Z]", r"[a-z]", r"[0-9]"])
-        .expect("Invalid regex");
-    let matched_len = re_passwd.matches(passwd).iter().count();
-    if matched_len == re_passwd.len() {
-        return Ok(());
-    }
-    let error = ValidationError::new("password");
-    Err(error)
 }
 
 fn hash_password(plain: &String, salt: &[u8]) -> Result<String, argon2::Error> {

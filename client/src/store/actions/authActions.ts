@@ -2,7 +2,7 @@ import axios from "axios";
 import { NextRouter } from "next/dist/client/router";
 import { AnyAction } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { LoginData, RegisterData, SavedUser, Tokens } from "types";
+import { LoginData, RegisterData, Tokens } from "types";
 import { action } from "typesafe-actions";
 import {
     SIGN_UP_SUCCESS,
@@ -51,7 +51,6 @@ export const signUp = (user: RegisterData, router: NextRouter) => async (
         dispatch(signUpSuccess(userId));
         router.push("/");
     } catch (error) {
-        console.error(error)
         dispatch(signUpFailure());
     }
 };
@@ -68,7 +67,6 @@ export const login = (user: LoginData, router: NextRouter) => async (
         dispatch(loginSuccess(userId));
         router.push("/");
     } catch (error) {
-        console.error(error)
         dispatch(loginFailure());
     }
 };
