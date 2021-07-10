@@ -8,10 +8,22 @@ export const saveUserData = (user: SavedUser) => {
     localStorage.setItem("userId", user.userId.toString());
 }
 
+export const getAccessToken = (): string | null => {
+    return localStorage.getItem("accessToken");
+}
+
+export const getRefreshToken = (): string | null => {
+    return localStorage.getItem("refreshToken");
+}
+
+export const getLoggedInUserId = (): string | null => {
+    return localStorage.getItem("userId");
+}
+
 export const getUserData = (): SavedUser | null => {
-    const accessToken = localStorage.getItem("accessToken");
-    const refreshToken = localStorage.getItem("refreshToken");
-    const userId = localStorage.getItem("userId");
+    const accessToken = getAccessToken();
+    const refreshToken = getRefreshToken();
+    const userId = getLoggedInUserId();
 
     if (!accessToken || !refreshToken || !userId) {
         return null;
@@ -26,7 +38,7 @@ export const getUserData = (): SavedUser | null => {
 
 export const isValidToken = async (accessToken: string): Promise<boolean> => {
     try {
-        await axios.get(`${API}/me`, {
+        await axios.get(`${API}/authCheck`, {
             headers: `Authorization: Bearer ${accessToken}`
         });
         return true;

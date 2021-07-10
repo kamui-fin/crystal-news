@@ -13,7 +13,7 @@ import {
     LOGIN_FAILURE,
 } from "./actionTypes";
 import { API } from "config"
-import { saveUserData } from "lib/utils";
+import { saveUserData } from "lib/auth";
 
 export const signUpRequest = () => {
     return action(SIGN_UP_REQUEST);
