@@ -1,3 +1,5 @@
+import { IncomingMessage } from "http";
+import { NextApiRequestCookies } from "next/dist/next-server/server/api-utils";
 import { ActionType } from "typesafe-actions";
 import * as actions from "./store/actions/authActions";
 
@@ -27,7 +29,9 @@ export interface RootState {
 }
 
 export interface AuthState {
-    userId: number;
+    tokens: Tokens | null;
 }
 
 export type Actions = ActionType<typeof actions>;
+export type AuthRoute = '/login' | '/signup'
+export type Request = IncomingMessage & { cookies: NextApiRequestCookies };

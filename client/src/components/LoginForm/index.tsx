@@ -1,9 +1,8 @@
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/dist/client/router";
 import { yupResolver } from '@hookform/resolvers/yup';
 import { LoginData } from "types";
 import { useDispatch } from "react-redux";
-import { login } from "store/actions/authActions";
+import { fetchTokens } from "store/actions/authActions";
 import styles from "./style.module.scss"
 import Link from "next/link"
 import classNames from "classnames/bind";
@@ -12,7 +11,6 @@ import * as yup from 'yup';
 
 const LoginForm: React.FC = () => {
     const cx = classNames.bind(styles);
-    const router = useRouter();
     const dispatch = useDispatch();
 
     const schema = yup.object().shape({
@@ -27,7 +25,7 @@ const LoginForm: React.FC = () => {
     } = useForm<LoginData>({ resolver: yupResolver(schema) });
 
     const onSubmit = async (data: LoginData) => {
-        dispatch(login(data, router));
+        dispatch(fetchTokens(data, "/login"));
     };
 
     return (

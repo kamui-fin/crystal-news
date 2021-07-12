@@ -1,6 +1,5 @@
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/dist/client/router";
-import { signUp } from "store/actions/authActions";
+import { fetchTokens } from "store/actions/authActions";
 import { RegisterData } from "types";
 import { yupResolver } from '@hookform/resolvers/yup';
 import styles from "./style.module.scss"
@@ -10,7 +9,6 @@ import * as yup from 'yup';
 import { useDispatch } from "react-redux";
 
 const RegisterForm: React.FC = () => {
-    const router = useRouter();
     const dispatch = useDispatch();
     const cx = classNames.bind(styles);
 
@@ -27,13 +25,13 @@ const RegisterForm: React.FC = () => {
         formState: { errors },
     } = useForm<RegisterData>({ resolver: yupResolver(schema) });
     const onSubmit = async (data: RegisterData) => {
-        dispatch(signUp(data, router));
+        dispatch(fetchTokens(data, "/signup"));
     };
 
     return (
         <div className={styles.container}>
-            <h3 className={styles.welcome}>Welcome Back</h3>
-            <p className={styles.prompt}>Enter your credentials to access your account</p>
+            <h3 className={styles.welcome}>Create Account</h3>
+            <p className={styles.prompt}>Enter some details to get started</p>
 
             <form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
                 <div className={styles.inputContainer}>
