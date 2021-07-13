@@ -1,7 +1,7 @@
 import { IncomingMessage } from "http";
 import { NextApiRequestCookies } from "next/dist/next-server/server/api-utils";
 import { ActionType } from "typesafe-actions";
-import * as actions from "./store/actions/authActions";
+import { actions } from "./store/actions/authActions";
 
 export interface RegisterData {
     username: string;

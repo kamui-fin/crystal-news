@@ -10,14 +10,15 @@ import Router from "next/router"
 import { action } from "typesafe-actions";
 import { removeCookie, setCookie } from "lib/cookie";
 
-export const authenticate = (tokens: Tokens) => (dispatch: ThunkDispatch<{}, {}, AnyAction>) => {
-    dispatch(action(AUTHENTICATE, { tokens }))
+export const actions = {
+    authenticate: (tokens: Tokens) => action(AUTHENTICATE, { tokens }),
+    deauthenticate: () => action(DEAUTHENTICATE)
 }
 
-export const deauthenticate = (tokens: Tokens) => (dispatch: ThunkDispatch<{}, {}, AnyAction>) => {
+export const deauthenticate = () => (dispatch: ThunkDispatch<{}, {}, AnyAction>) => {
     removeCookie('token');
     Router.push("/");
-    dispatch(action(DEAUTHENTICATE, { tokens }))
+    dispatch(actions.deauthenticate)
 }
 
 export const fetchTokens = (user: RegisterData | LoginData, route: AuthRoute) => async (
@@ -28,7 +29,7 @@ export const fetchTokens = (user: RegisterData | LoginData, route: AuthRoute) =>
         const tokens: Tokens = res.data.tokens;
         setCookie('accessToken', tokens.accessToken);
         setCookie('refreshToken', tokens.refreshToken);
-        dispatch(authenticate(tokens));
+        dispatch(actions.authenticate(tokens));
         Router.push("/");
     } catch (error) {
         throw new Error(error);

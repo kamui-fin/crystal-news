@@ -1,4 +1,4 @@
-import { Context, createWrapper, HYDRATE } from "next-redux-wrapper";
+import { createWrapper, HYDRATE, MakeStore } from "next-redux-wrapper";
 import {
     AnyAction,
     applyMiddleware,
@@ -11,6 +11,8 @@ import thunk from "redux-thunk";
 import { RootState } from "types";
 import { auth } from "./reducers/authReducer";
 import { composeWithDevTools } from "redux-devtools-extension";
+import { Reducer } from "typesafe-actions";
+import { getTokensFromClient } from "lib/utils";
 
 const bindMiddleware = (middleware: Middleware[]) => {
     if (process.env.NODE_ENV !== 'production') {
@@ -19,19 +21,33 @@ const bindMiddleware = (middleware: Middleware[]) => {
     return applyMiddleware(...middleware)
 }
 
-const reducer = (state: RootState = {} as RootState, action: AnyAction) => {
-    if (action.type == HYDRATE) {
-        return { ...state, ...action.payload }
+const initialState = {
+    auth: {
+        tokens: getTokensFromClient()
     }
-    else {
-        return combineReducers({ auth })
+};
+
+const combinedReducer = combineReducers({ auth })
+
+const reducer: Reducer<RootState, AnyAction> = (state: RootState = initialState, action: AnyAction) => {
+    if (action.type == HYDRATE) {
+        const nextState = {
+            ...state,
+            ...action.payload,
+        }
+        if (state.auth.tokens) nextState.auth.tokens = state.auth.tokens;
+        return nextState;
+    } else {
+        return combinedReducer(state, action);
     }
 }
 
-export const initStore = (context: Context) => {
-    return createStore(reducer, bindMiddleware([thunk]));
-};
+export const initStore: MakeStore<Store<RootState>> = () => createStore(reducer, bindMiddleware([thunk]));
 
-export const wrapper = createWrapper<Store<RootState>>(initStore, {
+export const wrapper = createWrapper(initStore, {
     debug: true,
+    // serializeState: state => {
+    //     console.dir(state)
+    //     return JSON.stringify(initialState);
+    // }
 });
