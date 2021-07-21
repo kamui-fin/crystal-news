@@ -1,13 +1,12 @@
 import { useForm } from "react-hook-form";
-import { yupResolver } from '@hookform/resolvers/yup';
+import { yupResolver } from "@hookform/resolvers/yup";
 import { LoginData } from "types";
 import { useDispatch } from "react-redux";
-import { fetchTokens } from "store/actions/authActions";
-import styles from "./style.module.scss"
-import Link from "next/link"
+import { fetchToken } from "store/actions/authActions";
+import styles from "./style.module.scss";
+import Link from "next/link";
 import classNames from "classnames/bind";
-import * as yup from 'yup';
-
+import * as yup from "yup";
 
 const LoginForm: React.FC = () => {
     const cx = classNames.bind(styles);
@@ -25,31 +24,58 @@ const LoginForm: React.FC = () => {
     } = useForm<LoginData>({ resolver: yupResolver(schema) });
 
     const onSubmit = async (data: LoginData) => {
-        dispatch(fetchTokens(data, "/login"));
+        dispatch(fetchToken(data, "/login"));
     };
 
     return (
         <div className={styles.loginContainer}>
             <h3 className={styles.welcome}>Welcome Back</h3>
-            <p className={styles.prompt}>Enter your credentials to access your account</p>
+            <p className={styles.prompt}>
+                Enter your credentials to access your account
+            </p>
 
-            <form className={styles.loginForm} onSubmit={handleSubmit(onSubmit)}>
+            <form
+                className={styles.loginForm}
+                onSubmit={handleSubmit(onSubmit)}
+            >
                 <div className={styles.inputContainer}>
-                    <input {...register("usernameOrEmail")} className={cx("inputBox", { "inputError": errors.usernameOrEmail })} placeholder="Enter your username or email" />
-                    <p className={styles.error}>{errors.usernameOrEmail?.message}</p>
+                    <input
+                        {...register("usernameOrEmail")}
+                        className={cx("inputBox", {
+                            inputError: errors.usernameOrEmail,
+                        })}
+                        placeholder="Enter your username or email"
+                    />
+                    <p className={styles.error}>
+                        {errors.usernameOrEmail?.message}
+                    </p>
                 </div>
 
                 <div className={styles.inputContainer}>
-                    <input {...register("password")} className={cx("inputBox", { "inputError": errors.password })} type="password" placeholder="Enter your password" />
+                    <input
+                        {...register("password")}
+                        className={cx("inputBox", {
+                            inputError: errors.password,
+                        })}
+                        type="password"
+                        placeholder="Enter your password"
+                    />
                     <p className={styles.error}>{errors.password?.message}</p>
                 </div>
 
-                <input className={styles.submitButton} type="submit" value="Sign In" />
+                <input
+                    className={styles.submitButton}
+                    type="submit"
+                    value="Sign In"
+                />
             </form>
 
-            <p className={styles.signUpLink}>Don&apos;t have an account? <Link href="/register">Sign Up</Link></p>
+            <p className={styles.signUpLink}>
+                Don&apos;t have an account?{" "}
+                <Link href="/register">Sign Up</Link>
+            </p>
         </div>
     );
-}
+};
 
 export default LoginForm;

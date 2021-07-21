@@ -1,11 +1,9 @@
-import RegisterForm from "components/RegisterForm"
-import { useUnauthorizedOnly } from "lib/hooks";
+import RegisterForm from "components/RegisterForm";
+import { useUnauthOnly } from "lib/utils";
 
 const Register = () => {
-    useUnauthorizedOnly();
-    return (
-        <RegisterForm />
-    )
+    useUnauthOnly();
+    return <RegisterForm />;
 };
 
 export default Register;

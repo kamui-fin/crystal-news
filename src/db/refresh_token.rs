@@ -1,7 +1,4 @@
-use crate::{
-    error::{ApiError, ApiResult},
-    jwt::JWT,
-};
+use crate::error::{ApiError, ApiResult};
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use sqlx::{Pool, Postgres};
@@ -15,11 +12,6 @@ pub struct RefreshToken {
     pub user_id: i32,
     #[validate(custom = "validate_exp")]
     expiration: DateTime<Utc>,
-}
-
-#[derive(Deserialize, Serialize)]
-pub struct ReqRefresh {
-    pub token: JWT,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -36,13 +28,13 @@ fn validate_exp(exp: &DateTime<Utc>) -> Result<(), validator::ValidationError> {
 }
 
 pub async fn get_token_from_req(
-    req_ref: &ReqRefresh,
+    req_ref: &str,
     pool: &sqlx::Pool<Postgres>,
 ) -> ApiResult<RefreshToken> {
     sqlx::query_as!(
         RefreshToken,
         "SELECT * FROM refresh_token WHERE token = $1",
-        req_ref.token.0
+        req_ref
     )
     .fetch_one(pool)
     .await

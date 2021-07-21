@@ -12,7 +12,7 @@ pub struct Claims {
     pub exp: i64,
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct JWT(pub String);
 
 impl Claims {

@@ -1,11 +1,11 @@
 import { useForm } from "react-hook-form";
 import { fetchTokens } from "store/actions/authActions";
 import { RegisterData } from "types";
-import { yupResolver } from '@hookform/resolvers/yup';
-import styles from "./style.module.scss"
-import Link from "next/link"
+import { yupResolver } from "@hookform/resolvers/yup";
+import styles from "./style.module.scss";
+import Link from "next/link";
 import classNames from "classnames/bind";
-import * as yup from 'yup';
+import * as yup from "yup";
 import { useDispatch } from "react-redux";
 
 const RegisterForm: React.FC = () => {
@@ -13,10 +13,22 @@ const RegisterForm: React.FC = () => {
     const cx = classNames.bind(styles);
 
     const schema = yup.object().shape({
-        username: yup.string().required("Username cannot be empty").min(3, "Username must be atleast 3 characters long"),
-        email: yup.string().required("Email cannot be empty").email("Must be a valid email"),
-        password: yup.string().required("Password cannot be empty").min(6, "Password must be atleast 6 characters long"),
-        confirmPassword: yup.string().required("Password confirmation is required").oneOf([yup.ref('password'), null], "Passwords don't match.")
+        username: yup
+            .string()
+            .required("Username cannot be empty")
+            .min(3, "Username must be atleast 3 characters long"),
+        email: yup
+            .string()
+            .required("Email cannot be empty")
+            .email("Must be a valid email"),
+        password: yup
+            .string()
+            .required("Password cannot be empty")
+            .min(6, "Password must be atleast 6 characters long"),
+        confirmPassword: yup
+            .string()
+            .required("Password confirmation is required")
+            .oneOf([yup.ref("password"), null], "Passwords don't match."),
     });
 
     const {
@@ -35,31 +47,63 @@ const RegisterForm: React.FC = () => {
 
             <form className={styles.form} onSubmit={handleSubmit(onSubmit)}>
                 <div className={styles.inputContainer}>
-                    <input {...register("username")} className={cx("inputBox", { "inputError": errors.username })} placeholder="Enter a username" />
+                    <input
+                        {...register("username")}
+                        className={cx("inputBox", {
+                            inputError: errors.username,
+                        })}
+                        placeholder="Enter a username"
+                    />
                     <p className={styles.error}>{errors.username?.message}</p>
                 </div>
 
                 <div className={styles.inputContainer}>
-                    <input {...register("email")} className={cx("inputBox", { "inputError": errors.email })} placeholder="Enter an email" />
+                    <input
+                        {...register("email")}
+                        className={cx("inputBox", { inputError: errors.email })}
+                        placeholder="Enter an email"
+                    />
                     <p className={styles.error}>{errors.email?.message}</p>
                 </div>
 
                 <div className={styles.inputContainer}>
-                    <input {...register("password")} className={cx("inputBox", { "inputError": errors.password })} type="password" placeholder="Enter a password" />
+                    <input
+                        {...register("password")}
+                        className={cx("inputBox", {
+                            inputError: errors.password,
+                        })}
+                        type="password"
+                        placeholder="Enter a password"
+                    />
                     <p className={styles.error}>{errors.password?.message}</p>
                 </div>
 
                 <div className={styles.inputContainer}>
-                    <input {...register("confirmPassword")} className={cx("inputBox", { "inputError": errors.password })} type="password" placeholder="Confirm your password" />
-                    <p className={styles.error}>{errors.confirmPassword?.message}</p>
+                    <input
+                        {...register("confirmPassword")}
+                        className={cx("inputBox", {
+                            inputError: errors.password,
+                        })}
+                        type="password"
+                        placeholder="Confirm your password"
+                    />
+                    <p className={styles.error}>
+                        {errors.confirmPassword?.message}
+                    </p>
                 </div>
 
-                <input className={styles.submitButton} type="submit" value="Register" />
+                <input
+                    className={styles.submitButton}
+                    type="submit"
+                    value="Register"
+                />
             </form>
 
-            <p className={styles.loginLink}>Already have an account? <Link href="/login">Login</Link></p>
+            <p className={styles.loginLink}>
+                Already have an account? <Link href="/login">Login</Link>
+            </p>
         </div>
     );
-}
+};
 
 export default RegisterForm;

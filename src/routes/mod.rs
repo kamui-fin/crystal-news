@@ -8,26 +8,17 @@ pub mod sources;
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(web::resource("/signup").route(web::post().to(auth::signup)))
         .service(web::resource("/login").route(web::post().to(auth::login)))
-        .service(
-            web::resource("/logout")
-                .wrap(Authorization)
-                .route(web::delete().to(auth::logout)),
-        )
-        .service(
-            web::resource("/authCheck")
-                .wrap(Authorization)
-                .route(web::get().to(auth::auth_check)),
-        )
-        .service(
-            web::resource("/refreshToken")
-                .wrap(Authorization)
-                .route(web::post().to(auth::refresh_token)),
-        )
+        // .service(
+        //     web::resource("/logout")
+        //         .wrap(Authorization)
+        //         .route(web::delete().to(auth::logout)),
+        // )
         .service(
             web::resource("/feed")
                 .wrap(Authorization)
                 .route(web::post().to(articles::get_article_feed)),
         )
+        .service(web::resource("/refreshToken").route(web::post().to(auth::refresh_token)))
         .service(
             web::scope("/sources")
                 .service(

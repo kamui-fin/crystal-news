@@ -1,38 +1,34 @@
-import axios from "axios";
 import { AnyAction } from "redux";
 import { ThunkDispatch } from "redux-thunk";
-import { AuthRoute, LoginData, RegisterData, Tokens } from "types";
-import {
-    AUTHENTICATE, DEAUTHENTICATE,
-} from "./actionTypes";
-import { API } from "config"
-import Router from "next/router"
+import { AuthRoute, LoginData, RegisterData } from "types";
+import { AUTHENTICATE, DEAUTHENTICATE } from "./actionTypes";
+import { API } from "config";
+import Router from "next/router";
 import { action } from "typesafe-actions";
-import { removeCookie, setCookie } from "lib/cookie";
+import { axiosInstance } from "lib/utils";
 
 export const actions = {
-    authenticate: (tokens: Tokens) => action(AUTHENTICATE, { tokens }),
-    deauthenticate: () => action(DEAUTHENTICATE)
-}
+    authenticate: (token: string) => action(AUTHENTICATE, { token }),
+    deauthenticate: () => action(DEAUTHENTICATE),
+};
 
-export const deauthenticate = () => (dispatch: ThunkDispatch<{}, {}, AnyAction>) => {
-    removeCookie('token');
-    Router.push("/");
-    dispatch(actions.deauthenticate)
-}
-
-export const fetchTokens = (user: RegisterData | LoginData, route: AuthRoute) => async (
+export const deauthenticate = () => (
     dispatch: ThunkDispatch<{}, {}, AnyAction>
 ) => {
+    Router.push("/login");
+    dispatch(actions.deauthenticate);
+};
+
+export const fetchToken = (
+    user: RegisterData | LoginData,
+    route: AuthRoute
+) => async (dispatch: ThunkDispatch<{}, {}, AnyAction>) => {
     try {
-        const res = await axios.post(`${API}${route}`, user);
-        const tokens: Tokens = res.data.tokens;
-        setCookie('accessToken', tokens.accessToken);
-        setCookie('refreshToken', tokens.refreshToken);
-        dispatch(actions.authenticate(tokens));
+        const res = await axiosInstance.post(`${API}${route}`, user);
+        const { token } = res.data;
+        dispatch(actions.authenticate(token));
         Router.push("/");
     } catch (error) {
         throw new Error(error);
     }
 };
-

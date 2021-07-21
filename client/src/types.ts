@@ -15,23 +15,25 @@ export interface LoginData {
     password: string;
 }
 
-export interface Tokens {
-    accessToken: string;
-    refreshToken: string;
-}
-
-export interface SavedUser extends Tokens {
-    userId: number;
-}
-
 export interface RootState {
     auth: AuthState;
 }
 
 export interface AuthState {
-    tokens: Tokens | null;
+    token: string | null;
+}
+
+export interface Source {
+    sourceId: number;
+    title: string;
+    website: string;
+}
+
+export enum RequestSource {
+    CLIENT,
+    SERVER,
 }
 
 export type Actions = ActionType<typeof actions>;
-export type AuthRoute = '/login' | '/signup'
+export type AuthRoute = "/login" | "/signup";
 export type Request = IncomingMessage & { cookies: NextApiRequestCookies };

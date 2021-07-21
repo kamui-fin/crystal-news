@@ -1,12 +1,9 @@
-import LoginForm from "components/LoginForm"
-import { useUnauthorizedOnly } from "lib/hooks";
+import LoginForm from "components/LoginForm";
+import { useUnauthOnly } from "lib/utils";
 
 const Login = () => {
-    useUnauthorizedOnly();
-
-    return (
-        <LoginForm />
-    )
+    useUnauthOnly();
+    return <LoginForm />;
 };
 
 export default Login;
