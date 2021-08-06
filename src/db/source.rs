@@ -8,6 +8,7 @@ use sqlx::Pool;
 use validator::Validate;
 
 #[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Source {
     pub source_id: i32,
     user_id: i32,

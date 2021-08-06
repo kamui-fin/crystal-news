@@ -1,5 +1,5 @@
 import { useForm } from "react-hook-form";
-import { fetchTokens } from "store/actions/authActions";
+import { fetchToken } from "store/actions/authActions";
 import { RegisterData } from "types";
 import { yupResolver } from "@hookform/resolvers/yup";
 import styles from "./style.module.scss";
@@ -37,7 +37,7 @@ const RegisterForm: React.FC = () => {
         formState: { errors },
     } = useForm<RegisterData>({ resolver: yupResolver(schema) });
     const onSubmit = async (data: RegisterData) => {
-        dispatch(fetchTokens(data, "/signup"));
+        dispatch(fetchToken(data, "/signup"));
     };
 
     return (

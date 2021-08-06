@@ -1,4 +1,5 @@
 import { Source } from "types";
+import Link from "next/link";
 import styles from "./style.module.scss";
 
 interface Props {
@@ -6,12 +7,15 @@ interface Props {
 }
 
 const SidebarSources: React.FC<Props> = ({ sources }: Props) => {
-    const src = sources.map((s: Source) => (
-        <div className={styles.source} key={s.sourceId}>
-            <a href={s.website}>{s.title}</a>
+    return (
+        <div className={styles.sources}>
+            {sources.map((s: Source) => (
+                <div className={styles.source} key={s.sourceId}>
+                    <Link href={`/feed/${s.sourceId}`}>{s.title}</Link>
+                </div>
+            ))}
         </div>
-    ));
-    return <>{src}</>;
+    );
 };
 
 export default SidebarSources;

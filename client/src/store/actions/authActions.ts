@@ -7,16 +7,14 @@ import Router from "next/router";
 import { action } from "typesafe-actions";
 import { axiosInstance } from "lib/utils";
 
-export const actions = {
-    authenticate: (token: string) => action(AUTHENTICATE, { token }),
-    deauthenticate: () => action(DEAUTHENTICATE),
-};
+export const authenticate = (token: string) => action(AUTHENTICATE, { token })
+export const deauthenticate = () => action(DEAUTHENTICATE)
 
-export const deauthenticate = () => (
+export const removeToken = () => (
     dispatch: ThunkDispatch<{}, {}, AnyAction>
 ) => {
     Router.push("/login");
-    dispatch(actions.deauthenticate);
+    dispatch(deauthenticate);
 };
 
 export const fetchToken = (
@@ -26,8 +24,8 @@ export const fetchToken = (
     try {
         const res = await axiosInstance.post(`${API}${route}`, user);
         const { token } = res.data;
-        dispatch(actions.authenticate(token));
-        Router.push("/");
+        dispatch(authenticate(token));
+        Router.push("/feed/all");
     } catch (error) {
         throw new Error(error);
     }

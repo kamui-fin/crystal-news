@@ -12,9 +12,9 @@ pub struct Config {
     pub db_url: String,
     #[envconfig(from = "JWT_SECRET")]
     pub jwt_secret: String,
-    #[envconfig(from = "ACCESS_TOKEN_EXPIRE", default = "10")]
+    #[envconfig(from = "ACCESS_TOKEN_EXPIRE", default = "300")]
     pub acc_token_exp: i64,
-    #[envconfig(from = "REFRESH_TOKEN_EXPIRE", default = "60")]
+    #[envconfig(from = "REFRESH_TOKEN_EXPIRE", default = "8640000")]
     pub ref_token_exp: i64,
 }
 

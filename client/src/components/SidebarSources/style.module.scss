@@ -1,0 +1,28 @@
+.sources {
+    display: flex;
+    position: fixed;
+    flex-direction: column;
+    width: fit-content;
+    height: 100%;
+    background-color: #f1f0f5;
+    padding-top: 3rem;
+    padding-left: 2rem;
+    padding-right: 6rem;
+
+    .source {
+        height: 3rem;
+        display: flex;
+        align-items: center;
+        a {
+            text-decoration: none;
+            color: #6a6972;
+            font-weight: 450;
+
+            &:hover {
+                color: #624cab;
+                border-radius: 3px;
+                transition: color 0.1s linear;
+            }
+        }
+    }
+}
