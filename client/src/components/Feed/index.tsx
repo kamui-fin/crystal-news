@@ -17,6 +17,7 @@ const Feed = (props: Props) => {
             if (isLoggedIn && props.selectionType == "ALL") {
                 const res = await axiosInstance.post("/feed");
                 setArticles(res.data);
+                console.log(articles)
             }
         })();
     });

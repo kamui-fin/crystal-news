@@ -8,15 +8,10 @@ pub mod sources;
 pub fn config(cfg: &mut ServiceConfig) {
     cfg.service(web::resource("/signup").route(web::post().to(auth::signup)))
         .service(web::resource("/login").route(web::post().to(auth::login)))
-        // .service(
-        //     web::resource("/logout")
-        //         .wrap(Authorization)
-        //         .route(web::delete().to(auth::logout)),
-        // )
         .service(
-            web::resource("/feed")
-                .wrap(Authorization)
-                .route(web::post().to(articles::get_article_feed)),
+            web::scope("/feed")
+                .service(web::resource("/all").route(web::get().to(articles::get_all_feed)))
+                .wrap(Authorization),
         )
         .service(web::resource("/refreshToken").route(web::post().to(auth::refresh_token)))
         .service(
@@ -25,12 +20,6 @@ pub fn config(cfg: &mut ServiceConfig) {
                     web::resource("")
                         .route(web::post().to(sources::subscribe_feed))
                         .route(web::get().to(sources::get_all_feeds)),
-                )
-                .service(
-                    web::resource("/{id}")
-                        .route(web::delete().to(sources::unsubscribe_feed))
-                        .route(web::put().to(sources::update_feed))
-                        .route(web::get().to(sources::get_feed)),
                 )
                 .wrap(Authorization),
         );

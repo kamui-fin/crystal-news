@@ -1,5 +1,5 @@
 use actix_cors::Cors;
-use actix_web::{http, middleware::Logger, App, HttpServer};
+use actix_web::{middleware::Logger, App, HttpServer};
 use crystal_news::config::init_context;
 use crystal_news::routes;
 use log::warn;

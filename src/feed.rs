@@ -1,24 +1,10 @@
 use crate::db::{article::AddArticle, source::Source};
-use actix_web::{
-    client::Client,
-    web::{Buf, Bytes},
-};
 use chrono::DateTime;
 use rss::Channel;
 
-pub async fn fetch_rss_xml(url: &String) -> Option<Bytes> {
-    let client = Client::default();
-    let response = client
-        .get(url)
-        .header("User-Agent", "actix-web/3.0")
-        .send()
-        .await;
-    response.ok()?.body().await.ok()
-}
-
-pub async fn get_channel_info(url: &String) -> Option<Channel> {
-    let buf = fetch_rss_xml(url).await?;
-    let channel = Channel::read_from(buf.bytes()).ok()?;
+pub async fn get_channel_info(url: &str) -> Option<Channel> {
+    let content = reqwest::get(url).await.ok()?.bytes().await.ok()?;
+    let channel = Channel::read_from(&content[..]).ok()?;
     Some(channel)
 }
 
@@ -43,7 +29,10 @@ pub async fn get_items(source: Source) -> Option<Vec<AddArticle>> {
 pub async fn generate_feed(sources: Vec<Source>) -> Option<Vec<AddArticle>> {
     let mut feed: Vec<AddArticle> = vec![];
     for source in sources {
-        feed.extend(get_items(source).await?);
+        let itms = get_items(source).await;
+        if let Some(itms) = itms {
+            feed.extend(itms);
+        }
     }
     feed.sort_by(|f1, f2| f1.pub_date.cmp(&f2.pub_date).reverse());
     Some(feed)

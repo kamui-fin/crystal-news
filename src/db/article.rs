@@ -49,12 +49,12 @@ pub async fn add_articles(articles: &Vec<AddArticle>, pool: &Pool<Postgres>) -> 
     Ok(())
 }
 
-pub async fn get_latest_article(pool: &Pool<Postgres>) -> ApiResult<Article> {
+pub async fn get_latest_article(pool: &Pool<Postgres>) -> Option<Article> {
     sqlx::query_as!(
         Article,
         "SELECT * FROM articles ORDER BY pub_date DESC LIMIT 1"
     )
     .fetch_one(pool)
     .await
-    .map_err(|_| ApiError::InternalServerError)
+    .ok()
 }
