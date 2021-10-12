@@ -79,9 +79,9 @@ pub async fn refresh_token(
     let cookie_token = req.cookie("refresh_token");
     if let Some(token) = cookie_token {
         let ref_token = get_token_from_req(token.value(), &context.pool).await?;
-        if let Ok(_) = ref_token.validate() {
+        if ref_token.validate().is_ok() {
             delete_refresh_token(&ref_token, &context.pool).await?;
-            return Ok(generate_tokens(ref_token.user_id, &context).await?);
+            return generate_tokens(ref_token.user_id, &context).await;
         }
     }
     Err(ApiError::InvalidToken)

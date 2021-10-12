@@ -13,7 +13,7 @@ pub struct Claims {
 }
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct JWT(pub String);
+pub struct Jwt(pub String);
 
 impl Claims {
     pub fn new(sub: i32, exp_sec: i64) -> Self {
@@ -27,16 +27,16 @@ impl Claims {
     }
 }
 
-pub fn gen_token(claims: &Claims, secret: &str) -> Result<JWT, jsonwebtoken::errors::Error> {
+pub fn gen_token(claims: &Claims, secret: &str) -> Result<Jwt, jsonwebtoken::errors::Error> {
     jsonwebtoken::encode(
         &Header::default(),
         claims,
         &EncodingKey::from_secret(secret.as_bytes()),
     )
-    .map(|t| JWT(t))
+    .map(Jwt)
 }
 
-pub fn decode(token: JWT, secret: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
+pub fn decode(token: Jwt, secret: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
     jsonwebtoken::decode::<Claims>(
         &token.0,
         &DecodingKey::from_secret(secret.as_ref()),
@@ -45,23 +45,23 @@ pub fn decode(token: JWT, secret: &str) -> Result<Claims, jsonwebtoken::errors::
     .map(|e| e.claims)
 }
 
-pub fn validate(token: JWT, secret: &str) -> bool {
+pub fn validate(token: Jwt, secret: &str) -> bool {
     decode(token, secret).is_ok()
 }
 
-pub fn get_jwt_from_bearer(headers: &HeaderMap) -> Option<JWT> {
+pub fn get_jwt_from_bearer(headers: &HeaderMap) -> Option<Jwt> {
     if let Some(header) = headers.get("Authorization") {
         if let Ok(header_str) = header.to_str() {
             let bearer = header_str[6..].trim().to_string();
-            return Some(JWT(bearer));
+            return Some(Jwt(bearer));
         }
     }
     None
 }
 
-impl FromRequest for JWT {
+impl FromRequest for Jwt {
     type Error = ApiError;
-    type Future = Ready<ApiResult<JWT>>;
+    type Future = Ready<ApiResult<Jwt>>;
     type Config = ();
 
     fn from_request(req: &HttpRequest, _payload: &mut dev::Payload) -> Self::Future {

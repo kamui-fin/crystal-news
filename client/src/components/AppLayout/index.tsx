@@ -1,4 +1,4 @@
-import styles from "styles/app.module.scss";
+import styles from "./style.module.scss";
 import SidebarSources from "components/SidebarSources";
 import { useEffect, useState } from "react";
 import { axiosInstance } from "lib/utils";
@@ -11,20 +11,23 @@ interface Props {
 
 const AppLayout = (props: Props) => {
     const [sources, setSources] = useState([]);
-    const isLoggedIn = useSelector<RootState, boolean>((state) => state.auth.isLoggedIn);
+    const isLoggedIn = useSelector<RootState, boolean>(
+        (state) => state.auth.isLoggedIn
+    );
 
     useEffect(() => {
         (async () => {
             if (isLoggedIn && sources.length == 0) {
                 const res = await axiosInstance.get("/sources");
                 setSources(res.data);
+                console.log(res);
             }
         })();
     });
 
     return (
         <div className={styles.app}>
-            <SidebarSources sources={sources} />
+                <SidebarSources sources={sources} />
             {props.children}
         </div>
     );

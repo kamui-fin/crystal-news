@@ -28,7 +28,7 @@ pub struct AddArticle {
     pub guid: Option<String>,
 }
 
-pub async fn add_articles(articles: &Vec<AddArticle>, pool: &Pool<Postgres>) -> ApiResult<()> {
+pub async fn add_articles(articles: &[AddArticle], pool: &Pool<Postgres>) -> ApiResult<()> {
     for article in articles {
         sqlx::query!(
         "INSERT INTO articles(source_id, item_link, title, description, author, pub_date, content, guid)

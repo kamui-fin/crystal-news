@@ -24,7 +24,7 @@ pub struct RespToken {
 fn validate_exp(exp: &DateTime<Utc>) -> Result<(), validator::ValidationError> {
     (exp > &chrono::Utc::now())
         .then(|| ())
-        .ok_or(ValidationError::new("expired"))
+        .ok_or_else(|| ValidationError::new("expired"))
 }
 
 pub async fn get_token_from_req(

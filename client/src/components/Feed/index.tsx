@@ -11,17 +11,26 @@ interface Props {
 
 const Feed = (props: Props) => {
     const [articles, setArticles] = useState([]);
-    const isLoggedIn = useSelector<RootState, boolean>((state) => state.auth.isLoggedIn);
+    const isLoggedIn = useSelector<RootState, boolean>(
+        (state) => state.auth.isLoggedIn
+    );
     useEffect(() => {
         (async () => {
             if (isLoggedIn && props.selectionType == "ALL") {
-                const res = await axiosInstance.post("/feed");
+                const res = await axiosInstance.get("/feed/all");
                 setArticles(res.data);
-                console.log(articles)
+                console.log(articles);
             }
         })();
-    });
-    return <div></div>;
+    }, []);
+
+    return (
+        <div>
+            {articles.map((a) => (
+                <p>{a.title}</p>
+            ))}
+        </div>
+    );
 };
 
 export default Feed;

@@ -6,11 +6,11 @@ use crate::{
     },
     error::ApiResult,
     feed::generate_feed,
-    jwt::{decode, JWT},
+    jwt::{decode, Jwt},
 };
 use actix_web::{web, HttpResponse};
 
-pub async fn get_all_feed(jwt: JWT, context: web::Data<Context>) -> ApiResult<HttpResponse> {
+pub async fn get_all_feed(jwt: Jwt, context: web::Data<Context>) -> ApiResult<HttpResponse> {
     let user_id = decode(jwt, &context.config.jwt_secret).unwrap().sub;
     let sources = get_all_sources(user_id, &context.pool).await?;
     let feed = generate_feed(sources).await.unwrap_or_default();

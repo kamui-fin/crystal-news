@@ -3,7 +3,7 @@ use argon2::Config as ArgonConfig;
 use argon2::Variant::Argon2id;
 use chrono::{DateTime, Utc};
 use rand::RngCore;
-use regex::{Regex};
+use regex::Regex;
 use serde::{Deserialize, Serialize};
 use sqlx::Pool;
 use validator::{Validate, ValidationError};
@@ -50,17 +50,17 @@ pub struct LoginCreds {
 fn validate_confirm_password(data: &SignUpCreds) -> Result<(), ValidationError> {
     (data.password == data.confirm_password)
         .then(|| ())
-        .ok_or(ValidationError::new("confirm_password"))
+        .ok_or_else(|| ValidationError::new("confirm_password"))
 }
 
 fn validate_email_or_username(email_usr: &String) -> Result<(), ValidationError> {
     let matches = validator::validate_email(email_usr) || RE_USERNAME.is_match(&email_usr);
     matches
         .then(|| ())
-        .ok_or(ValidationError::new("username_email"))
+        .ok_or_else(|| ValidationError::new("username_email"))
 }
 
-fn hash_password(plain: &String, salt: &[u8]) -> Result<String, argon2::Error> {
+fn hash_password(plain: &str, salt: &[u8]) -> Result<String, argon2::Error> {
     let config = ArgonConfig {
         variant: Argon2id,
         ..ArgonConfig::default()
@@ -69,7 +69,7 @@ fn hash_password(plain: &String, salt: &[u8]) -> Result<String, argon2::Error> {
 }
 
 pub async fn register_user(creds: &SignUpCreds, pool: &Pool<sqlx::Postgres>) -> ApiResult<User> {
-    if let Err(_) = creds.validate() {
+    if creds.validate().is_err() {
         return Err(ApiError::Validation);
     }
 
@@ -80,7 +80,7 @@ pub async fn register_user(creds: &SignUpCreds, pool: &Pool<sqlx::Postgres>) -> 
     .fetch_one(pool)
     .await;
 
-    if let Ok(_) = exist_user {
+    if exist_user.is_ok() {
         return Err(ApiError::InvalidCredentials);
     }
 
