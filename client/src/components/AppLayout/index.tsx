@@ -1,5 +1,5 @@
 import styles from "./style.module.scss";
-import SidebarSources from "components/SidebarSources";
+import Sidebar from "components/Sidebar";
 import { useEffect, useState } from "react";
 import { axiosInstance } from "lib/utils";
 import { useSelector } from "react-redux";
@@ -10,25 +10,26 @@ interface Props {
 }
 
 const AppLayout = (props: Props) => {
-    const [sources, setSources] = useState([]);
+    const [sources, setSources] = useState({ sources: [], fetched: false });
     const isLoggedIn = useSelector<RootState, boolean>(
         (state) => state.auth.isLoggedIn
     );
 
+    const loadUserSubs = async () => {
+        if (isLoggedIn && !sources.fetched) {
+            const res = await axiosInstance.get("/sources");
+            setSources({ sources: res.data, fetched: res.status == 200 });
+        }
+    };
+
     useEffect(() => {
-        (async () => {
-            if (isLoggedIn && sources.length == 0) {
-                const res = await axiosInstance.get("/sources");
-                setSources(res.data);
-                console.log(res);
-            }
-        })();
+        loadUserSubs();
     });
 
     return (
         <div className={styles.app}>
-                <SidebarSources sources={sources} />
-            {props.children}
+            <Sidebar sources={sources.sources} />
+            <div className={styles.children}>{props.children}</div>
         </div>
     );
 };

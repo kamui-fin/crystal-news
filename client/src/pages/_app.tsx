@@ -3,29 +3,38 @@ import { FC, useEffect } from "react";
 import { wrapper } from "../store";
 import { axiosInstance, interceptors } from "lib/utils";
 import { useRouter } from "next/router";
-import "styles/global.scss";
 import { useDispatch, useStore } from "react-redux";
 import { authenticate } from "store/actions/authActions";
+import AppLayout from "components/AppLayout";
+import "styles/global.scss";
 
 const App: FC<AppProps> = ({ Component, pageProps }: AppProps) => {
     const router = useRouter();
     const dispatch = useDispatch();
     const store = useStore();
 
-    useEffect(() => {
+    const setupAuth = async () => {
         interceptors(store);
         const restoreSession = async () => {
             try {
                 const tokens = await axiosInstance.post(`/refreshToken`);
-                dispatch(authenticate(tokens.data.token))
+                dispatch(authenticate(tokens.data.token));
             } catch (e) {
                 router.push("/login");
             }
-        }
+        };
         restoreSession();
-    }, [])
+    };
 
-    return <Component {...pageProps} />;
+    useEffect(() => {
+        setupAuth();
+    }, []);
+
+    return (
+        <AppLayout>
+            <Component {...pageProps} />
+        </AppLayout>
+    );
 };
 
 export default wrapper.withRedux(App);

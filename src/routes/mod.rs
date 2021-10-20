@@ -11,6 +11,7 @@ pub fn config(cfg: &mut ServiceConfig) {
         .service(
             web::scope("/feed")
                 .service(web::resource("/all").route(web::get().to(articles::get_all_feed)))
+                .service(web::resource("/{id}").route(web::get().to(articles::get_feed_by_source)))
                 .wrap(Authorization),
         )
         .service(web::resource("/refreshToken").route(web::post().to(auth::refresh_token)))

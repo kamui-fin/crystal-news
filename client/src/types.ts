@@ -30,7 +30,17 @@ export interface Source {
     website: string;
 }
 
+export interface Article {
+    article_id: number;
+    source_id: number;
+    item_link: string;
+    title: string;
+    description: string;
+    author: string;
+    pub_date: Date;
+    content: string;
+    guid: string;
+}
+
 export type Actions = ActionType<typeof actions>;
 export type AuthRoute = "/login" | "/signup";
-
-export type FeedSelection = "ALL" | number;

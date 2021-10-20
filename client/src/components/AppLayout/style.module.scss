@@ -1,4 +1,7 @@
 .app {
-    display: flex;
-    flex-direction: row;
+    .children {
+        margin-left: 300px;
+        overflow-y: auto;
+        padding: 1rem;
+    }
 }

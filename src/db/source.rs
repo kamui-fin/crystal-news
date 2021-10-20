@@ -22,8 +22,6 @@ pub struct Source {
 pub struct AddSource {
     #[validate(url)]
     pub feed_link: String,
-    #[validate(length(min = 1))]
-    pub title: String,
 }
 
 pub struct Subscription {
@@ -59,7 +57,7 @@ pub async fn add_source(add_source: AddSource, pool: &Pool<sqlx::Postgres>) -> A
                 Source,
                 "INSERT INTO sources(title, description, website, feed_link, last_updated)
                     VALUES($1,$2,$3,$4,$5) RETURNING *",
-                add_source.title,
+                info.title,
                 info.description,
                 info.link,
                 add_source.feed_link,
